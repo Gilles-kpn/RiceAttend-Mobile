@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.gilles.riceattend.ui.formfields.EmailFieldState
@@ -28,6 +29,7 @@ fun LoginFormWidget(viewModel: LoginFormViewModel = LoginFormViewModel()){
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .clip(RoundedCornerShape(10.dp))
     ) {
         Column(
             modifier = Modifier
