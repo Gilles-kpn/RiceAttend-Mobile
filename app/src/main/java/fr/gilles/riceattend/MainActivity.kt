@@ -10,6 +10,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import fr.gilles.riceattend.ui.navigation.NavigationContent
 import fr.gilles.riceattend.ui.theme.RiceAttendTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,22 +25,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Greeting("Android")
+                    NavigationContent(navHostController = rememberNavController())
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    RiceAttendTheme {
-        Greeting("Android")
     }
 }
