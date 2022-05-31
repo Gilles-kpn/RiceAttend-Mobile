@@ -1,5 +1,6 @@
 package fr.gilles.riceattend.ui.navigation
 
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -18,14 +19,14 @@ sealed class Route(
 }
 
 @Composable
-fun NavigationContent(navHostController: NavHostController){
+fun NavigationContent(navHostController: NavHostController, snackbarHostState: SnackbarHostState){
     NavHost(navController = navHostController, startDestination = Route.AuthRoute.path ){
         navigation(startDestination = Route.LoginRoute.path, route = Route.AuthRoute.path){
             composable(Route.LoginRoute.path){
-                LoginScreen(nav = navHostController)
+                LoginScreen(nav = navHostController, snackbarHostState = snackbarHostState)
             }
             composable(Route.RegisterRoute.path){
-                RegisterScreen(navHostController)
+                RegisterScreen(navHostController, snackbarHostState = snackbarHostState)
             }
         }
     }

@@ -29,7 +29,10 @@ import fr.gilles.riceattend.ui.formfields.TextFieldState
 
 @Composable
 @Preview
-fun RegisterForm(viewModel: RegisterFormViewModel = RegisterFormViewModel()){
+fun RegisterForm(
+    viewModel: RegisterFormViewModel = RegisterFormViewModel(),
+    additional: @Composable () -> Unit = {}
+){
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -178,6 +181,11 @@ fun RegisterForm(viewModel: RegisterFormViewModel = RegisterFormViewModel()){
             ) {
                 Text(text = "S'enregistrer")
             }
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp))
+            additional(
+            )
 
         }
     }

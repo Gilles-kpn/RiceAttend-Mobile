@@ -21,13 +21,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.gilles.riceattend.services.api.ApiCallback
+import fr.gilles.riceattend.services.api.ApiEndpoint
+import fr.gilles.riceattend.services.api.ApiResponseError
+import fr.gilles.riceattend.services.entities.payloader.LoginUser
 import fr.gilles.riceattend.ui.formfields.EmailFieldState
 import fr.gilles.riceattend.ui.formfields.PasswordFieldState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @Preview
 @Composable
-fun LoginFormWidget(viewModel: LoginFormViewModel = LoginFormViewModel()){
+fun LoginFormWidget(
+    viewModel: LoginFormViewModel = LoginFormViewModel(),
+    additional: @Composable () -> Unit = {},
+    onError:(String)->Unit = {},
+    onSuccess:()->Unit = {}
+){
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -47,7 +59,9 @@ fun LoginFormWidget(viewModel: LoginFormViewModel = LoginFormViewModel()){
                 fontSize = 20.sp,
                 textAlign = TextAlign.Left,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().padding(start = 10.dp, top = 10.dp,end = 10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, top = 10.dp, end = 10.dp)
             )
             OutlinedTextField(
                 modifier = Modifier
@@ -111,16 +125,30 @@ fun LoginFormWidget(viewModel: LoginFormViewModel = LoginFormViewModel()){
                 .fillMaxWidth()
                 .height(5.dp))
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    viewModel.login(
+                        onError, onSuccess
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
                     .padding(top = 10.dp),
                 shape = RoundedCornerShape(30.dp),
+                enabled = (viewModel.emailState.text.isNotEmpty() &&
+                        viewModel.emailState.text.isNotBlank() &&
+                        viewModel.emailState.error == null) && (
+                        viewModel.passwordState.text.isNotEmpty() &&
+                        viewModel.passwordState.text.isNotBlank() &&
+                        viewModel.passwordState.error == null)
+
             ) {
                 Text(text = "Se Connecter")
             }
-
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp))
+            additional()
         }
     }
 
@@ -130,4 +158,21 @@ class LoginFormViewModel{
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
     var passwordVisible by mutableStateOf(false)
+
+
+    fun login(onError: (String) -> Unit, onSuccess: ()->Unit){
+        CoroutineScope(Dispatchers.IO).launch {
+            ApiEndpoint.authRepository.login(
+                LoginUser(emailState.text, passwordState.text)
+            ).enqueue(object : ApiCallback<String>(){
+                override fun onSuccess(response: String) {
+                    onSuccess()
+                }
+
+                override fun onError(error: ApiResponseError) {
+                    onError(error.message)
+                }
+            })
+        }
+    }
 }
