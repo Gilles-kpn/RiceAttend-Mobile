@@ -12,15 +12,28 @@ abstract class ApiCallback<T>: Callback<T> {
         if(response.isSuccessful){
             onSuccess(response.body()!!)
         } else {
-            onError(Gson().fromJson(
-                response.errorBody()?.string(),
+            val apiResponseError:ApiResponseError? = Gson().fromJson(
+                (response.errorBody())?.string(),
                 ApiResponseError::class.java
-            ))
+            )
+            apiResponseError?.let {
+                onError(it)
+            } ?: run{
+                onError(ApiResponseError(
+                    "",
+                    "",
+                    "",
+                    0,
+                    ""
+                ))
+            }
+
         }
     }
 
     abstract fun onSuccess(response: T)
     abstract fun onError(error: ApiResponseError)
+
 
     override fun onFailure(call: Call<T>, t: Throwable) {
         Log.e("ApiCallback Eror", t.message.toString())

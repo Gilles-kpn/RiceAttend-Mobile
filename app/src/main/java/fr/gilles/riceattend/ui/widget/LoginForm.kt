@@ -140,10 +140,13 @@ fun LoginFormWidget(
                         viewModel.emailState.error == null) && (
                         viewModel.passwordState.text.isNotEmpty() &&
                         viewModel.passwordState.text.isNotBlank() &&
-                        viewModel.passwordState.error == null)
+                        viewModel.passwordState.error == null) && !viewModel.loading
 
             ) {
-                Text(text = "Se Connecter")
+                if (viewModel.loading)
+                    CircularProgressIndicator()
+                else
+                    Text(text = "Se Connecter")
             }
             Spacer(modifier = Modifier
                 .fillMaxWidth()
@@ -158,19 +161,23 @@ class LoginFormViewModel{
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
     var passwordVisible by mutableStateOf(false)
+    var loading by mutableStateOf(false)
 
 
     fun login(onError: (String) -> Unit, onSuccess: ()->Unit){
         CoroutineScope(Dispatchers.IO).launch {
+            loading=true
             ApiEndpoint.authRepository.login(
                 LoginUser(emailState.text, passwordState.text)
             ).enqueue(object : ApiCallback<String>(){
                 override fun onSuccess(response: String) {
                     onSuccess()
+                    loading= false
                 }
 
                 override fun onError(error: ApiResponseError) {
-                    onError(error.message)
+                    loading = false
+                    onError("Bad Credentials")
                 }
             })
         }
