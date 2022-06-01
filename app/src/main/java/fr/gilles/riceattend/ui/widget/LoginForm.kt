@@ -44,7 +44,7 @@ fun LoginFormWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp)),
     ) {
         Column(
             modifier = Modifier
@@ -144,7 +144,9 @@ fun LoginFormWidget(
 
             ) {
                 if (viewModel.loading)
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp)
+                    )
                 else
                     Text(text = "Se Connecter")
             }
