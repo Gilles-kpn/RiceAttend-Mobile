@@ -3,15 +3,13 @@ package fr.gilles.riceattend.services.entities.models
 import com.google.gson.annotations.SerializedName
 
 data class Params(
-    @SerializedName("pageNumber") var pageNumber: Int  =0,
-    @SerializedName("pageSize") var pageSize: Int = 0,
-    @SerializedName("sort") var sort: Sort = Sort.ASC,
+    @SerializedName("pageNumber") var pageNumber: Int = 0,
+    @SerializedName("pageSize") var pageSize: Int = 12,
+    @SerializedName("sort") var sort: Sort = Sort.DESC,
     @SerializedName("deleted") var deleted: Boolean = false,
     @SerializedName("fields") var fields: Array<String> = arrayOf("code")
 
-){
-
-
+) {
 
     fun toMap(): Map<String, Any> {
         return mapOf(
@@ -52,7 +50,7 @@ enum class Sort(private val value: String) {
     ASC("ASC"),
     DESC("DESC");
 
-   override fun toString(): String {
+    override fun toString(): String {
         return value
     }
 }

@@ -6,8 +6,10 @@ import java.util.*
 sealed class Audit {
     @SerializedName("code")
     var code: String = ""
+
     @SerializedName("createdAt")
     var createdAt: Date = Date()
+
     @SerializedName("updatedAt")
-    val updatedAt: Date = Date()
+    var updatedAt: Date = Date()
 }

@@ -7,25 +7,27 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-abstract class ApiCallback<T>: Callback<T> {
+abstract class ApiCallback<T> : Callback<T> {
     override fun onResponse(call: Call<T>, response: Response<T>) {
-        if(response.isSuccessful){
+        if (response.isSuccessful) {
             onSuccess(response.body()!!)
         } else {
-            val apiResponseError:ApiResponseError? = Gson().fromJson(
+            val apiResponseError: ApiResponseError? = Gson().fromJson(
                 (response.errorBody())?.string(),
                 ApiResponseError::class.java
             )
             apiResponseError?.let {
                 onError(it)
-            } ?: run{
-                onError(ApiResponseError(
-                    "",
-                    "",
-                    "",
-                    0,
-                    ""
-                ))
+            } ?: run {
+                onError(
+                    ApiResponseError(
+                        "",
+                        "",
+                        "",
+                        0,
+                        ""
+                    )
+                )
             }
 
         }
@@ -36,7 +38,8 @@ abstract class ApiCallback<T>: Callback<T> {
 
 
     override fun onFailure(call: Call<T>, t: Throwable) {
-        Log.e("ApiCallback Eror", t.message.toString())
+        t.printStackTrace()
+        Log.e("ApiCallback Error", t.message.toString())
     }
 }
 
