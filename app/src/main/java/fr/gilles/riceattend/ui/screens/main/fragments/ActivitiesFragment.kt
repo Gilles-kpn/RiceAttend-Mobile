@@ -9,10 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,11 +27,11 @@ import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 import fr.gilles.riceattend.ui.navigation.Route
+import fr.gilles.riceattend.ui.widget.ErrorText
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -38,10 +40,10 @@ import java.util.*
 @Composable
 fun ActivitiesFragment(
     onMenuClick: () -> Unit = {},
-    scope:CoroutineScope = rememberCoroutineScope(),
+    scope: CoroutineScope = rememberCoroutineScope(),
     snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
-    viewModel:ActivitiesViewModel = remember {ActivitiesViewModel()}
+    viewModel: ActivitiesViewModel = remember { ActivitiesViewModel() }
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -60,7 +62,8 @@ fun ActivitiesFragment(
         Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp)) {
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 InputWidget(
                     state = viewModel.searchState,
@@ -84,21 +87,23 @@ fun ActivitiesFragment(
                 }
             }
         }
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)) {
-            when(viewModel.loading){
-                true ->{
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)
+        ) {
+            when (viewModel.loading) {
+                true -> {
                     LoadingCard()
                 }
                 false -> {
-                    when(viewModel.activities){
-                        null ->{
+                    when (viewModel.activities) {
+                        null -> {
                             LoadingCard()
                         }
                         else -> {
                             viewModel.activities?.let {
-                                if (it.empty == true){
+                                if (it.empty == true) {
                                     Column(
                                         Modifier.fillMaxSize(),
                                         verticalArrangement = Arrangement.Center,
@@ -106,18 +111,18 @@ fun ActivitiesFragment(
                                     ) {
                                         Text("Aucune activité")
                                     }
-                                }else{
-                                   Column(
-                                       Modifier
-                                           .fillMaxSize()
-                                           .verticalScroll(rememberScrollState()),
-                                       verticalArrangement = Arrangement.Top,
-                                       horizontalAlignment = Alignment.CenterHorizontally
-                                   ) {
-                                       it.content.forEach{
-                                               activity -> ActivityTile()
-                                       }
-                                   }
+                                } else {
+                                    Column(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState()),
+                                        verticalArrangement = Arrangement.Top,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        it.content.forEach { activity ->
+                                            ActivityTile()
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -129,7 +134,7 @@ fun ActivitiesFragment(
 }
 
 
-class ActivitiesViewModel:ViewModel(){
+class ActivitiesViewModel : ViewModel() {
     var activities by mutableStateOf<Page<Activity>?>(null)
     var loading by mutableStateOf(false)
     val params by mutableStateOf<Params>(Params())
@@ -143,11 +148,11 @@ class ActivitiesViewModel:ViewModel(){
         loadActivities()
     }
 
-    private fun loadActivities(){
+    private fun loadActivities() {
         loading = true
-        viewModelScope.launch{
+        viewModelScope.launch {
             ApiEndpoint.activityRepository.getActivities(params.toMap())
-                .enqueue(object: ApiCallback<Page<Activity>>(){
+                .enqueue(object : ApiCallback<Page<Activity>>() {
                     override fun onSuccess(response: Page<Activity>) {
                         activities = response
                         loading = false
@@ -165,55 +170,83 @@ class ActivitiesViewModel:ViewModel(){
 }
 
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 @Preview("ActivitiesFragmentPreview", showBackground = true)
-fun ActivityCreationScreen(viewModel:ActivityCreationViewModel = remember {ActivityCreationViewModel()}) {
-    var currentStep by remember{ mutableStateOf(0) }
+fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { ActivityCreationViewModel() }) {
+    var currentStep by remember { mutableStateOf(0) }
+    var currentStepHasError by remember { mutableStateOf(false) }
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         AppBar(title = "Creation d'une activite", leftContent = {
             IconButton(onClick = {}) {
                 Icon(Icons.Outlined.ArrowBack, "Menu", tint = MaterialTheme.colors.background)
             }
         }, rightContent = {
-            IconButton(onClick = {  }) {
-            }
+            IconButton(onClick = { }) {}
         })
         Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 20.dp)
-                .height(40.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            when(currentStep){
-                0 ->{
-                    Text("1. Informations" ,Modifier.padding(horizontal = 10.dp))
+            Modifier.fillMaxWidth().padding(vertical = 15.dp, horizontal = 20.dp).height(40.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when (currentStep) {
+                0 -> {
+                    Text("1. Informations", Modifier.padding(horizontal = 10.dp))
                     Divider()
                 }
-                1->{
+                1 -> {
                     Text("2. Rizieres concernées")
                     Divider()
                 }
-                2 ->{
+                2 -> {
                     Text("3. Ouvriers concernés")
                 }
-                3 ->{
+                3 -> {
                     Text("4. Validation")
                 }
             }
         }
-        Column(Modifier
-                .fillMaxWidth()
-                .padding(10.dp)) {
-            when(currentStep){
-                0 ->{
+        Column(modifier = Modifier.fillMaxSize().padding(10.dp),
+        ) {
+            if(currentStepHasError)
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp, horizontal = 10.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    backgroundColor = Color.Red.copy(alpha = 0.5f)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(
+                            text = viewModel.activityFormViewModel.errorsStepMessage[currentStep](),
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                            color = MaterialTheme.colors.contentColorFor(Color.Red.copy(alpha = 0.5f))
+                        )
+                        IconButton(onClick = { currentStepHasError = false }) {
+                            Icon(Icons.Default.Close, "Close error")
+                        }
+                    }
+                }
+            when (currentStep) {
+                0 -> {
+                    var dateSelectListener by remember { mutableStateOf<(Instant) -> Unit> ( {} ) }
+                    var showDateDialog by remember {
+                        mutableStateOf(false)
+                    }
+                    if(showDateDialog) ShowDatePicker(onDateSelected = dateSelectListener)
 
-                    Text(text ="Les champs suivis de (*) sont les champs obligatoires", modifier = Modifier.padding(horizontal = 10.dp))
-                    Text(text= "Clickez sur l'icone date pour choisir une date", modifier = Modifier.padding(horizontal = 10.dp))
+                    Text(
+                        text = "Les champs suivis de (*) sont les champs obligatoires",
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                    Text(
+                        text = "Clickez sur l'icone date pour choisir une date",
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
                     InputWidget(
                         state = viewModel.activityFormViewModel.name,
                         title = "Nom de l'activité (*)",
@@ -227,70 +260,108 @@ fun ActivityCreationScreen(viewModel:ActivityCreationViewModel = remember {Activ
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        shape =  RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(10.dp),
                         value = viewModel.activityFormViewModel.convertInstantToReadableHumanDate(
                             viewModel.activityFormViewModel.startDate.value
-                        ) ,
+                        ),
                         onValueChange = {
-
+                            viewModel.activityFormViewModel.endDate.validate()
                         },
-                        label = { Text("Date de début (*)" )},
+                        label = { Text("Date de début (*)") },
                         trailingIcon = {
-                            IconButton(onClick = {}){
+                            IconButton(onClick = {
+                                dateSelectListener = {
+                                    viewModel.activityFormViewModel.startDate.value = it
+                                    viewModel.activityFormViewModel.startDate.validate()
+                                    showDateDialog = false
+                                }
+                                showDateDialog = true
+                            }) {
                                 Icon(Icons.Outlined.CalendarToday, "Calendrier")
                             }
-                        }
+                        },
+                        isError = viewModel.activityFormViewModel.startDate.error != null,
                     )
+                    viewModel.activityFormViewModel.startDate.error?.let {
+                        ErrorText(text = it)
+                    }
                     OutlinedTextField(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        shape =  RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(10.dp),
                         value = viewModel.activityFormViewModel.convertInstantToReadableHumanDate(
-                            viewModel.activityFormViewModel.startDate.value
-                        ) ,
+                            viewModel.activityFormViewModel.endDate.value
+                        ),
                         onValueChange = {
-
+                            viewModel.activityFormViewModel.endDate.validate()
                         },
-                        label = { Text("Date de fin (*)" )},
+                        label = { Text("Date de fin (*)") },
                         trailingIcon = {
-                            IconButton(onClick = {}){
+                            IconButton(onClick = {
+                                dateSelectListener = {
+                                    viewModel.activityFormViewModel.endDate.value = it
+                                    viewModel.activityFormViewModel.endDate.validate()
+                                    showDateDialog = false
+                                }
+
+                                showDateDialog = true
+                            }) {
                                 Icon(Icons.Outlined.CalendarToday, "Calendrier")
                             }
-                        }
+                        },
+                        isError = viewModel.activityFormViewModel.endDate.error != null,
                     )
-                }
-                1->{
-                    Text(text = "Selectionner les rizieres concernées en cliquant sur la case a cocher",
-                        modifier = Modifier.padding(horizontal = 10.dp))
 
-                    when(viewModel.paddyFields){
-                        null ->{
+                    viewModel.activityFormViewModel.endDate.error?.let {
+                        ErrorText(text = it)
+                    }
+                }
+                1 -> {
+                    Text(
+                        text = "Selectionner les rizieres concernées en cliquant sur la case a cocher",
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+
+                    when (viewModel.paddyFields) {
+                        null -> {
                             LoadingCard()
                         }
-                        else ->{
+                        else -> {
                             viewModel.paddyFields?.let {
-                                if(it.empty == true)
-                                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (it.empty == true)
+                                    Column(
+                                        Modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
                                         Text(text = "Pas de rizieres")
                                     }
                                 else
-                                    Column(Modifier.fillMaxSize()){
-                                        it.content.forEach {
-                                                paddyField ->
+                                    Column(Modifier.fillMaxSize()) {
+                                        it.content.forEach { paddyField ->
                                             Card(
                                                 Modifier
                                                     .fillMaxWidth()
-                                                    .padding(vertical = 5.dp)) {
-                                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                                    Checkbox(checked = viewModel.activityFormViewModel.paddyFields.value.contains(paddyField), onCheckedChange ={ checked ->
-                                                        if(checked)  viewModel.activityFormViewModel.paddyFields.let{ paddyFields ->
-                                                            paddyFields.value = paddyFields.value + paddyField
-                                                        }
-                                                        else  viewModel.activityFormViewModel.paddyFields.let{ paddyFields ->
-                                                            paddyFields.value = paddyFields.value - paddyField
-                                                        }
-                                                    })
+                                                    .padding(vertical = 5.dp)
+                                            ) {
+                                                Row(
+                                                    Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Checkbox(
+                                                        checked = viewModel.activityFormViewModel.paddyFields.value.contains(
+                                                            paddyField
+                                                        ), onCheckedChange = { checked ->
+                                                            if (checked) viewModel.activityFormViewModel.paddyFields.let { paddyFields ->
+                                                                paddyFields.value =
+                                                                    paddyFields.value + paddyField
+                                                            }
+                                                            else viewModel.activityFormViewModel.paddyFields.let { paddyFields ->
+                                                                paddyFields.value =
+                                                                    paddyFields.value - paddyField
+                                                            }
+                                                        })
                                                     PaddyFieldTile(paddyField = paddyField)
                                                 }
                                             }
@@ -301,37 +372,51 @@ fun ActivityCreationScreen(viewModel:ActivityCreationViewModel = remember {Activ
                         }
                     }
                 }
-                2->{
-                    Text(text = "Selectionner les ouvriers concernées en cliquant sur la case a cocher",
-                        modifier = Modifier.padding(horizontal = 10.dp))
+                2 -> {
+                    Text(
+                        text = "Selectionner les ouvriers concernées en cliquant sur la case a cocher",
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
 
-                    when(viewModel.paddyFields){
-                        null ->{
+                    when (viewModel.paddyFields) {
+                        null -> {
                             LoadingCard()
                         }
-                        else ->{
+                        else -> {
                             viewModel.workers?.let {
-                                if(it.empty == true)
-                                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (it.empty == true)
+                                    Column(
+                                        Modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
                                         Text(text = "Pas d'ouvriers")
                                     }
                                 else
-                                    Column(Modifier.fillMaxSize()){
-                                        it.content.forEach {
-                                                worker ->
+                                    Column(Modifier.fillMaxSize()) {
+                                        it.content.forEach { worker ->
                                             Card(
                                                 Modifier
                                                     .fillMaxWidth()
-                                                    .padding(vertical = 5.dp)) {
-                                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                                    Checkbox(checked = viewModel.activityFormViewModel.workers.value.contains(worker), onCheckedChange ={ checked ->
-                                                        if(checked) viewModel.activityFormViewModel.workers.let{ workers ->
-                                                            workers.value = workers.value + worker
-                                                        }
-                                                        else viewModel.activityFormViewModel.workers.let{ workers ->
-                                                            workers.value = workers.value - worker
-                                                        }
-                                                    })
+                                                    .padding(vertical = 5.dp)
+                                            ) {
+                                                Row(
+                                                    Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Checkbox(
+                                                        checked = viewModel.activityFormViewModel.workers.value.contains(
+                                                            worker
+                                                        ), onCheckedChange = { checked ->
+                                                            if (checked) viewModel.activityFormViewModel.workers.let { workers ->
+                                                                workers.value =
+                                                                    workers.value + worker
+                                                            }
+                                                            else viewModel.activityFormViewModel.workers.let { workers ->
+                                                                workers.value =
+                                                                    workers.value - worker
+                                                            }
+                                                        })
                                                     WorkerTile(worker = worker)
                                                 }
                                             }
@@ -343,77 +428,234 @@ fun ActivityCreationScreen(viewModel:ActivityCreationViewModel = remember {Activ
                     }
 
                 }
-                3->{
+                3 -> {
+                    Text(
+                        text = "Selectionner les ressources a utiliser en cliquant sur la case a cocher",
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                    when (viewModel.resources) {
+                        null -> {
+                            LoadingCard()
+                        }
+                        else -> {
+                            viewModel.resources?.let {
+                                if (it.empty == true)
+                                    Column(
+                                        Modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(text = "Pas de ressources")
+                                    }
+                                else
+                                    Column(Modifier.fillMaxSize()) {
+                                        it.content.forEach { resource ->
+                                            Card(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 5.dp)
+                                            ) {
+                                                var isChecked by remember { mutableStateOf(false) }
+                                                isChecked =
+                                                    viewModel.activityFormViewModel.activityResources.value
+                                                        .stream().anyMatch { activityResource ->
+                                                            activityResource.resourceCode == resource.code
+                                                        }
+                                                Column {
+                                                    Row(
+                                                        Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Checkbox(
+                                                            checked = viewModel.activityFormViewModel.activityResources.value
+                                                                .stream()
+                                                                .anyMatch { activityResource ->
+                                                                    activityResource.resourceCode == resource.code
+                                                                },
+                                                            onCheckedChange = { checked ->
+                                                                if (checked) viewModel.activityFormViewModel.activityResources.let { activityResource ->
+                                                                    activityResource.value =
+                                                                        activityResource.value + ActivityResourcePayload(
+                                                                            resourceCode = resource.code,
+                                                                            quantity = 1f
+                                                                        )
+                                                                }
+                                                                else viewModel.activityFormViewModel.activityResources.let { activityResource ->
+                                                                    activityResource.value =
+                                                                        activityResource.value.filter { activityResourcePayload ->
+                                                                            activityResourcePayload.resourceCode == resource.code
+                                                                        }
+                                                                }
+                                                                isChecked = checked
+                                                            })
+                                                        ResourceTile(resource = resource)
+                                                    }
+                                                    if (isChecked) {
+                                                        val quantityState by remember {
+                                                            mutableStateOf(TextFieldState<Int>(
+                                                                defaultValue = viewModel.activityFormViewModel.activityResources.value.stream()
+                                                                    .filter { activityResource ->
+                                                                        activityResource.resourceCode == resource.code
+                                                                    }.map { activityResource ->
+                                                                        activityResource.quantity
+                                                                    }.findFirst().orElse(0f).toInt(),
+                                                                validator = { quantity -> quantity > 0 && quantity <= resource.quantity },
+                                                                errorMessage = { "La quantité doit être comprise entre 1 et ${resource.quantity}" },
 
+                                                                )
+                                                            )
+                                                        }
+                                                        InputNumberWidget(
+                                                            state = quantityState,
+                                                            title = "Quantite de ${resource.name} a utiliser",
+                                                            onChange = { quantity ->
+                                                                viewModel.activityFormViewModel.activityResources.let { activityResource ->
+                                                                    activityResource.value =
+                                                                        activityResource.value.map { activityResourcePayload ->
+                                                                            if (activityResourcePayload.resourceCode == resource.code)
+                                                                                activityResourcePayload.copy(
+                                                                                    quantity = quantity.toFloat()
+                                                                                )
+                                                                            else
+                                                                                activityResourcePayload
+                                                                        }
+                                                                }
+                                                            })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                    }
                 }
-                4 ->{
-
-                }
-                else ->{
-
+                4 -> {
+                    when(viewModel.loading){
+                        true -> LoadingCard()
+                        false ->{
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ){
+                                when(viewModel.createdActivity){
+                                    null ->{
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            elevation = 10.dp,
+                                            backgroundColor = MaterialTheme.colors.onError
+                                        ){
+                                            Text(
+                                                text = "Erreur lors de la création de l'activité",
+                                                modifier = Modifier.padding(10.dp),
+                                                color = MaterialTheme.colors.contentColorFor(MaterialTheme.colors.onError)
+                                            )
+                                        }
+                                    }
+                                    else ->{
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            elevation = 10.dp,
+                                            backgroundColor = MaterialTheme.colors.onSurface
+                                        ){
+                                            Text(
+                                                text = "Activité créée avec succès",
+                                                modifier = Modifier.padding(10.dp),
+                                                color = MaterialTheme.colors.contentColorFor(MaterialTheme.colors.onSurface)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if(currentStep > 0){
-                Button(onClick = { currentStep-- },
+                .padding(10.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (currentStep > 0) {
+                Button(
+                    onClick = { currentStep-- },
                     Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp)) {
+                        .padding(horizontal = 8.dp)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.ArrowBack, "Retour")
                         Text("Précédent", modifier = Modifier.padding(horizontal = 10.dp))
                     }
                 }
             }
-            if(currentStep < 4){
-                Button(onClick = { currentStep++ },
-                    Modifier
+            if (currentStep < 4) {
+                Button(
+                    onClick = {
+                        if(viewModel.activityFormViewModel.stepsValidator[currentStep]()) {
+                            currentStepHasError = false
+                            if(currentStep == 3) viewModel.createActivity()
+                            currentStep++
+                        } else currentStepHasError = true
+                    },
+                    modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp)) {
+                        .padding(horizontal = 8.dp),
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Suivant", modifier = Modifier.padding(horizontal = 10.dp))
+                        if(currentStep != 3)
+                            Text("Suivant", modifier = Modifier.padding(horizontal = 10.dp))
+                        else Text("Créer", modifier = Modifier.padding(horizontal = 10.dp))
                         Icon(Icons.Outlined.ArrowForward, "Suivant")
                     }
                 }
             }
         }
+
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class ActivityCreationViewModel:ViewModel(){
+class ActivityCreationViewModel : ViewModel() {
     val activityFormViewModel by mutableStateOf(ActivityFormViewModel())
     var paddyFields by mutableStateOf<Page<PaddyField>?>(null)
     var workers by mutableStateOf<Page<Worker>?>(null)
+    var resources by mutableStateOf<Page<Resource>?>(null)
+    var loading by mutableStateOf(false)
+    var createdActivity by mutableStateOf<Activity?>(null)
 
 
     init {
         loadPaddyField()
         loadWorkers()
+        loadResources()
     }
 
-    fun loadPaddyField(){
+    fun loadPaddyField() {
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(Params(0,100).toMap())
-                .enqueue(object: ApiCallback<Page<PaddyField>>(){
+            ApiEndpoint.paddyFieldRepository.get(Params(0, 100).toMap())
+                .enqueue(object : ApiCallback<Page<PaddyField>>() {
                     override fun onSuccess(response: Page<PaddyField>) {
                         paddyFields = response
                     }
 
                     override fun onError(error: ApiResponseError) {
-                        
+
                     }
                 })
         }
     }
-    fun loadWorkers(){
+
+    fun loadWorkers() {
         viewModelScope.launch {
-            ApiEndpoint.workerRepository.get(Params(0,100).toMap())
-                .enqueue(object: ApiCallback<Page<Worker>>(){
+            ApiEndpoint.workerRepository.get(Params(0, 100).toMap())
+                .enqueue(object : ApiCallback<Page<Worker>>() {
                     override fun onSuccess(response: Page<Worker>) {
                         workers = response
                     }
@@ -424,10 +666,43 @@ class ActivityCreationViewModel:ViewModel(){
                 })
         }
     }
+
+    fun loadResources() {
+        viewModelScope.launch {
+            ApiEndpoint.resourceRepository.get(Params(0, 100).toMap())
+                .enqueue(object : ApiCallback<Page<Resource>>() {
+                    override fun onSuccess(response: Page<Resource>) {
+                        resources = response
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        TODO("Not yet implemented")
+                    }
+                })
+
+        }
+    }
+
+    fun createActivity() {
+        loading = true
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.create(activityFormViewModel.toActivityPayload())
+                .enqueue(object : ApiCallback<Activity>() {
+                    override fun onSuccess(response: Activity) {
+                        loading = false
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        loading = false
+                    }
+                })
+        }
+    }
+
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class ActivityFormViewModel{
+class ActivityFormViewModel {
     var name by mutableStateOf(TextFieldState(
         defaultValue = "",
         validator = {
@@ -450,10 +725,10 @@ class ActivityFormViewModel{
     var startDate by mutableStateOf(TextFieldState<Instant>(
         defaultValue = Instant.now(),
         validator = {
-            it.isAfter(Instant.now())
+            true
         },
         errorMessage = {
-            "Date de début requise"
+            "Choisissez une date de début postérieure à la date d'aujourd'hui"
         }
     ))
 
@@ -463,7 +738,7 @@ class ActivityFormViewModel{
             it.isAfter(startDate.value)
         },
         errorMessage = {
-            "Date de fin requise"
+            "Date de fin requise apres ${startDate.value.toString()}"
         }
     ))
     var paddyFields by mutableStateOf(TextFieldState<List<PaddyField>>(
@@ -485,13 +760,57 @@ class ActivityFormViewModel{
             ""
         }
     ))
+    var activityResources by mutableStateOf(TextFieldState<List<ActivityResourcePayload>>(
+        defaultValue = listOf(),
+        validator = {
+            true
+        },
+        errorMessage = {
+            ""
+        }
+    ))
 
 
-    fun convertInstantToReadableHumanDate(instant: Instant):String{
+    val stepsValidator by mutableStateOf(
+            listOf(
+                { name.isValid() && description.isValid() },
+                { paddyFields.isValid() },
+                { workers.isValid() },
+                { activityResources.isValid() }
+            )
+        )
+
+    val  errorsStepMessage by mutableStateOf(
+        listOf(
+            { if(name.isValid() && description.isValid() &&  startDate.isValid() && endDate.isValid()) ""
+            else "Veuillez remplir  les champs obligatoires" },
+            { if(paddyFields.isValid()) "" else "Veuillez selectionner au moins une riziere" },
+            { if(workers.isValid()) "" else "Veuillez selectionner au moins un travailleur" },
+            { if(activityResources.isValid()) "" else "Veuillez selectionner au moins un ressource" }
+        )
+    )
+
+
+    fun convertInstantToReadableHumanDate(instant: Instant): String {
         val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
             .withLocale(Locale.FRANCE)
             .withZone(ZoneId.systemDefault())
         return formatter.format(instant)
+    }
+
+
+    fun toActivityPayload(): ActivityPayload {
+        return ActivityPayload(
+            name = name.value,
+            description = description.value,
+            startDate = startDate.value.toString(),
+            endDate = endDate.value.toString(),
+            paddyFields = paddyFields.value.map { it.code },
+            workers = workers.value.map { it.code },
+            resources =activityResources.value.map {
+                ActivityResourcePayload(resourceCode = it.resourceCode, quantity = it.quantity)
+            }
+        )
     }
 }
 

@@ -1,6 +1,11 @@
 package fr.gilles.riceattend.ui.widget.components
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.os.Build
 import android.util.Log
+import android.widget.DatePicker
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,9 +15,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShortText
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -36,7 +40,9 @@ import fr.gilles.riceattend.ui.formfields.TextFieldState
 import fr.gilles.riceattend.ui.screens.main.fragments.PaddyFieldFormViewModel
 import fr.gilles.riceattend.ui.screens.main.fragments.WorkerFormViewModel
 import fr.gilles.riceattend.ui.widget.ErrorText
-import java.time.LocalTime
+import java.time.*
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.*
 
 @Composable
@@ -108,10 +114,74 @@ fun ActivityTile(onClick: () -> Unit = {}) {
 
 
 @Composable
-fun ShowDatePicker(onDateSelected: (Date, LocalTime) -> Unit  = {_, _ ->},
-                   initialDate: Date? = null
+fun ShowDatePicker(onDateSelected: (Instant) ->Unit = {}
 ){
+    val context = LocalContext.current
+    val mYear: Int
+    val mMonth: Int
+    val mDay: Int
+    val mHour: Int
+    val mMinute: Int
 
+    // Initializing a Calendar
+    val calendar = Calendar.getInstance()
+
+    // Fetching current year, month and day
+    mYear = calendar.get(Calendar.YEAR)
+    mMonth = calendar.get(Calendar.MONTH)
+    mDay = calendar.get(Calendar.DAY_OF_MONTH)
+    mHour = calendar.get(Calendar.HOUR)
+    mMinute = calendar.get(Calendar.MINUTE)
+
+    calendar.time = Date()
+
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+
+
+    val timePicker = TimePickerDialog(
+        context,
+        TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
+            //convert hourOfDay and minute to 2 digits
+            val hour = if (hourOfDay < 10) "0$hourOfDay" else hourOfDay.toString()
+            val min = if (minute < 10) "0$minute" else minute.toString()
+            time = "$hour:$min"
+            parseDateFromString("$date $time")?.let {
+               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                   onDateSelected(it.atZone(ZoneId.systemDefault()).toInstant())
+               }
+            }
+        },
+        mHour,
+        mMinute,
+        true
+    )
+
+
+    val datePicker  = DatePickerDialog(
+        context,
+        { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
+            //convert mDayMonth and mMont to 2 digits
+            val month = if (mMonth < 10) "0$mMonth" else mMonth.toString()
+            val day = if (mDayOfMonth < 10) "0$mDayOfMonth" else mDayOfMonth.toString()
+            date = "$day/$month/$mYear"
+            timePicker.show()
+        }, mYear, mMonth, mDay
+    )
+    datePicker.datePicker.minDate = calendar.timeInMillis
+    datePicker.show()
+
+
+
+
+
+}
+
+fun parseDateFromString(value:String): LocalDateTime? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+    }
+    return null
 }
 
 
@@ -264,7 +334,8 @@ fun InputNumberWidget(
     icon: ImageVector = Icons.Default.ShortText,
     trailing: @Composable () -> Unit = {},
     singleLine: Boolean = true,
-    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(10.dp)
+    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(10.dp),
+    onChange: (Int) -> Unit = {},
 ) {
     OutlinedTextField(
         modifier = Modifier
@@ -276,6 +347,7 @@ fun InputNumberWidget(
             try {
                 if (it.isNotEmpty()) {
                     state.value = it.toInt()
+                    onChange(it.toInt())
                 } else {
                     state.value = 0
                 }

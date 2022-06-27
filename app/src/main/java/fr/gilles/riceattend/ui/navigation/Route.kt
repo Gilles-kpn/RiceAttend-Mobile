@@ -1,5 +1,7 @@
 package fr.gilles.riceattend.ui.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.rememberScaffoldState
@@ -41,6 +43,7 @@ sealed class Route(
     object ActivityCreationRoute:Route(path = "activity/create")
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationContent(
     navHostController: NavHostController,

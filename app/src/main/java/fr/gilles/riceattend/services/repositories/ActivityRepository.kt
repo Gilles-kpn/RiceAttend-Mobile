@@ -1,11 +1,10 @@
 package fr.gilles.riceattend.services.repositories
 
 import fr.gilles.riceattend.services.entities.models.Activity
+import fr.gilles.riceattend.services.entities.models.ActivityPayload
 import fr.gilles.riceattend.services.entities.models.Page
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.QueryMap
+import retrofit2.http.*
 
 interface ActivityRepository {
 
@@ -15,6 +14,10 @@ interface ActivityRepository {
 
     @GET("activity/code")
     fun get(@Path("code") code:String):Call<Activity>
+
+
+    @POST("activity")
+    fun create(@Body activity: ActivityPayload):Call<Activity>
 
 
 }

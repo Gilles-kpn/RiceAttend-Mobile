@@ -1,6 +1,7 @@
 package fr.gilles.riceattend.services.entities.models
 
 import com.google.gson.annotations.SerializedName
+import java.time.Instant
 import java.util.*
 
 data class Activity(
@@ -34,6 +35,18 @@ data class ActivityResource(
     @SerializedName("value") var value: Double,
 ) : Audit()
 
+
+data class ActivityPayload(
+    @SerializedName("name") var name: String,
+    @SerializedName("startDate") var startDate: String,
+    @SerializedName("endDate") var endDate: String,
+    @SerializedName("description") var description: String,
+    @SerializedName("paddyFields") var paddyFields:List<String>,
+    @SerializedName("workers") var workers:List<String>,
+    @SerializedName("resources") var resources:List<ActivityResourcePayload>,
+
+)
+
 enum class ActivityStatus(val value: String) {
     INIT("INIT"),
     IN_PROGRESS("IN_PROGRESS"),
@@ -41,3 +54,8 @@ enum class ActivityStatus(val value: String) {
     UNDONE("UNDONE"),
     DONE("DONE")
 }
+
+data class ActivityResourcePayload(
+    var resourceCode: String,
+    var quantity: Float
+)
