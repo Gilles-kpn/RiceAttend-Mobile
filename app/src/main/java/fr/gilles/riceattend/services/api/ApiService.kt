@@ -1,5 +1,7 @@
 package fr.gilles.riceattend.services.api
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
@@ -10,10 +12,10 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 class ApiService {
     private val baseUrl: String = "https://riceattend.herokuapp.com/"
 
@@ -21,7 +23,7 @@ class ApiService {
         val builder = GsonBuilder()
         builder.registerTypeAdapter(
             Date::class.java,
-            JsonDeserializer<Any?> { json, _, _ -> Date(json.asJsonPrimitive.asLong) })
+            JsonDeserializer<Any?> { json, _, _ -> Date(json.asJsonPrimitive.asLong * 1000) })
         builder.create()
     }
 

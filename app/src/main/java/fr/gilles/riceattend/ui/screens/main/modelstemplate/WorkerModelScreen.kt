@@ -30,11 +30,9 @@ import fr.gilles.riceattend.services.app.SessionManager.Companion.context
 import fr.gilles.riceattend.services.entities.models.Worker
 import fr.gilles.riceattend.services.entities.models.WorkerActivity
 import fr.gilles.riceattend.ui.screens.main.fragments.WorkerFormViewModel
-import fr.gilles.riceattend.ui.widget.components.ActivityTile
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
 import fr.gilles.riceattend.ui.widget.components.WorkerForm
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
@@ -42,7 +40,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun WorkerModelScreen(
     navHostController: NavHostController,
-    scope: CoroutineScope = rememberCoroutineScope(),
     snackbarHostState: SnackbarHostState,
     viewModel: WorkerViewModel = remember {
         WorkerViewModel(
@@ -52,145 +49,163 @@ fun WorkerModelScreen(
         )
     }
 ) {
+    val scope = rememberCoroutineScope()
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    if (viewModel.loading) LoadingCard()
-    else viewModel.worker?.let {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AppBar(
-                title = it.name,
-                leftContent = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                    ) {
-                        Icon(
-                            Icons.Outlined.ArrowBack,
-                            "Back",
-                            tint = MaterialTheme.colors.background
-                        )
-                    }
-                },
-                rightContent = {
-                    IconButton(onClick = {}) {
-
-                    }
-                }
-            )
-
-            Card(
-                modifier = Modifier
-                    .padding(top = 30.dp, bottom = 20.dp)
-                    .width(100.dp)
-                    .height(100.dp)
-                    .clip(CircleShape)
-            ) {
-                Icon(Icons.Outlined.AccountCircle, "Worker image")
-            }
-            Text(
-                text = it.name,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 7.dp)
-            )
-            Text(
-                text = it.phone,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(bottom = 7.dp)
-                    .clickable { viewModel.openDialer() }
-            )
-            Text(
-                text = it.email,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .padding(bottom = 10.dp)
-                    .clickable { viewModel.openMail() },
-            )
-            Row(
-                horizontalArrangement = Arrangement.SpaceAround,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)
-            ) {
-                IconButton(
-                    onClick = { /*TODO*/ }, modifier = Modifier
-                        .clip(CircleShape)
-                ) {
-                    Icon(Icons.Outlined.Assignment, "Add to activity")
-                }
-                IconButton(
-                    onClick = { scope.launch { modalBottomSheetState.show() } }, modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colors.background)
-                ) {
-                    Icon(Icons.Outlined.Edit, "Edit", tint = MaterialTheme.colors.secondary)
-                }
-
-                IconButton(
-                    onClick = { /*TODO*/ }, modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colors.background)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colors.error
-                    )
-                }
-
-
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp),
-                Arrangement.SpaceBetween,
-                Alignment.CenterVertically
-            ) {
-                Text(text = "Activites", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { /*TODO*/ }) {
-                    //filter
-                    Icon(Icons.Outlined.FilterList, "Filter")
-                }
-            }
-            Divider(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                when (viewModel.activitiesLoading) {
-                    true -> {
-                        LoadingCard()
-                    }
-                    false -> {
+    when (viewModel.loading) {
+        true -> {
+            LoadingCard()
+        }
+        false -> {
+            when (viewModel.worker) {
+                null -> {}
+                else -> {
+                    viewModel.worker?.let {
                         Column(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            when (viewModel.activities.isEmpty()) {
+                            AppBar(
+                                title = it.name,
+                                leftContent = {
+                                    IconButton(
+                                        onClick = {
+                                            navHostController.popBackStack()
+                                        },
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.ArrowBack,
+                                            "Back",
+                                            tint = MaterialTheme.colors.background
+                                        )
+                                    }
+                                },
+                                rightContent = {
+                                    IconButton(onClick = {}) {
 
-                                true -> {
-                                    Text(
-                                        text = "Aucune activité",
-                                        modifier = Modifier.padding(top = 20.dp)
+                                    }
+                                }
+                            )
+
+                            Card(
+                                modifier = Modifier
+                                    .padding(top = 30.dp, bottom = 20.dp)
+                                    .width(100.dp)
+                                    .height(100.dp)
+                                    .clip(CircleShape)
+                            ) {
+                                Icon(Icons.Outlined.AccountCircle, "Worker image")
+                            }
+                            Text(
+                                text = it.name,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 7.dp)
+                            )
+                            Text(
+                                text = it.phone,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .padding(bottom = 7.dp)
+                                    .clickable { viewModel.openDialer() }
+                            )
+                            Text(
+                                text = it.email,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .padding(bottom = 10.dp)
+                                    .clickable { viewModel.openMail() },
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceAround,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        start = 20.dp,
+                                        end = 20.dp,
+                                        top = 10.dp,
+                                        bottom = 10.dp
+                                    )
+                            ) {
+                                IconButton(
+                                    onClick = { /*TODO*/ }, modifier = Modifier
+                                        .clip(CircleShape)
+                                ) {
+                                    Icon(Icons.Outlined.Assignment, "Add to activity")
+                                }
+                                IconButton(
+                                    onClick = { scope.launch { modalBottomSheetState.show() } },
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colors.background)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Edit,
+                                        "Edit",
+                                        tint = MaterialTheme.colors.secondary
                                     )
                                 }
-                                false -> {
-                                    viewModel.activities.forEach { _ ->
-                                        ActivityTile(
-                                        )
+
+                                IconButton(
+                                    onClick = { /*TODO*/ }, modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colors.background)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Delete,
+                                        contentDescription = "Delete",
+                                        tint = MaterialTheme.colors.error
+                                    )
+                                }
+
+
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 15.dp),
+                                Arrangement.SpaceBetween,
+                                Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Activites",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                IconButton(onClick = { /*TODO*/ }) {
+                                    //filter
+                                    Icon(Icons.Outlined.FilterList, "Filter")
+                                }
+                            }
+                            Divider(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    when (viewModel.activities.isEmpty()) {
+
+                                        true -> {
+                                            Text(
+                                                text = "Aucune activité",
+                                                modifier = Modifier.padding(top = 20.dp)
+                                            )
+                                        }
+                                        false -> {
+                                            viewModel.activities.forEach { activity ->
+
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -198,8 +213,9 @@ fun WorkerModelScreen(
                     }
                 }
             }
+
         }
-    } ?: run { LoadingCard() }
+    }
 
     ModalBottomSheetLayout(
         sheetContent = {
@@ -228,7 +244,6 @@ fun WorkerModelScreen(
 class WorkerViewModel(val code: String) : ViewModel() {
     var loading by mutableStateOf(false)
     var worker by mutableStateOf<Worker?>(null)
-    var activitiesLoading by mutableStateOf(false)
     var activities by mutableStateOf<List<WorkerActivity>>(listOf())
     var workerFormViewModel by mutableStateOf(WorkerFormViewModel())
     var updateLoading by mutableStateOf(false)
@@ -260,8 +275,8 @@ class WorkerViewModel(val code: String) : ViewModel() {
             ApiEndpoint.workerRepository.get(code)
                 .enqueue(object : ApiCallback<Worker>() {
                     override fun onSuccess(response: Worker) {
-                        loading = false
                         worker = response
+                        loading = false
                         initUpdateFormViewModel()
                         loadWorkerActivities()
                         Log.d("WorkerViewModel", "Worker: ${response}")
@@ -304,8 +319,8 @@ class WorkerViewModel(val code: String) : ViewModel() {
                     workerFormViewModel.toWorkerPayload()
                 ).enqueue(object : ApiCallback<Worker>() {
                     override fun onSuccess(response: Worker) {
-                        updateLoading = false
                         worker = response
+                        updateLoading = false
                         initUpdateFormViewModel()
                     }
 
@@ -320,18 +335,18 @@ class WorkerViewModel(val code: String) : ViewModel() {
 
     private fun loadWorkerActivities() {
         worker?.let {
-            activitiesLoading = true
+            loading = true
             viewModelScope.launch {
                 ApiEndpoint.workerRepository.getWorkerActivities(it.code)
                     .enqueue(object : ApiCallback<List<WorkerActivity>>() {
                         override fun onSuccess(response: List<WorkerActivity>) {
-                            activitiesLoading = false
                             activities = response
+                            loading = false
                             Log.d("WorkerViewModel", "Activities: ${response}")
                         }
 
                         override fun onError(error: ApiResponseError) {
-                            activitiesLoading = false
+                            loading = false
                             Log.d("WorkerViewModel", error.message)
                         }
 

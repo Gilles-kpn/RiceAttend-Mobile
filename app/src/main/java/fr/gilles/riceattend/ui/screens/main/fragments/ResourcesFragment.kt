@@ -61,7 +61,8 @@ fun ResourcesFragment(
         Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp)) {
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 InputWidget(
                     state = viewModel.searchState,
@@ -83,9 +84,11 @@ fun ResourcesFragment(
                 }
             }
         }
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
             when (viewModel.loading) {
                 true -> {
                     LoadingCard()

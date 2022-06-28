@@ -5,7 +5,6 @@ import android.app.TimePickerDialog
 import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -27,7 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -35,53 +34,58 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import coil.compose.rememberAsyncImagePainter
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import fr.gilles.riceattend.R
 import fr.gilles.riceattend.services.entities.models.*
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 import fr.gilles.riceattend.ui.screens.main.fragments.PaddyFieldFormViewModel
 import fr.gilles.riceattend.ui.screens.main.fragments.WorkerFormViewModel
 import fr.gilles.riceattend.ui.widget.ErrorText
-import java.time.*
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.*
 
 @Composable
-fun ActivityTile(onClick: () -> Unit = {}) {
+fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
     Card(modifier = Modifier
         .fillMaxWidth()
         .height(120.dp)
-        .padding(7.dp)
+        .padding(vertical = 7.dp)
         .clickable { onClick() }) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier =  Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier
                     .fillMaxHeight()
-                    .weight(2f), horizontalAlignment = Alignment.CenterHorizontally){
-                Text("Start Date", textAlign = TextAlign.Center)
+                    .weight(2f), horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 //vertical Divider
                 Divider(
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                     thickness = 1.dp,
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(10.dp)
-                        .weight(7f)
+                        .width(3.dp)
                         .padding(vertical = 2.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.verticalGradient(
                                 listOf(MaterialTheme.colors.primary, Color.White),
-                                startY = 170f * 0.5f,
+                                startY = 1 * ((Date().time - activity.startDate.time) / (activity.endDate.time - activity.startDate.time)).toFloat(),
                                 tileMode = TileMode.Clamp
                             )
                         )
                 )
-                Text("End Date", textAlign = TextAlign.Center)
             }
 
             Column(
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(vertical = 3.dp, horizontal = 10.dp)
                     .fillMaxWidth()
                     .fillMaxHeight()
                     .weight(7f)
@@ -93,19 +97,25 @@ fun ActivityTile(onClick: () -> Unit = {}) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Nom de l'activite", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text(activity.name, fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     Text(
-                        text = "En cours", modifier = Modifier
+                        text = activity.status.value, modifier = Modifier
                             .clip(CircleShape)
                             .background(MaterialTheme.colors.primary)
                             .padding(all = 5.dp), color = MaterialTheme.colors.background
                     )
                 }
                 Text(
-                    text = "De 20 Janvier 2020 - 27 Janvier 2020",
+                    text = activity.description,
                     modifier = Modifier.padding(bottom = 5.dp)
                 )
-                Text(text = "16 Ouvriers - 2 Rizieres - Couts: 300 000FCFA")
+                Text(
+                    text = "${formatDateToHumanReadable(activity.startDate)} - ${
+                        formatDateToHumanReadable(
+                            activity.endDate
+                        )
+                    }", modifier = Modifier.padding(bottom = 5.dp)
+                )
             }
         }
 
@@ -114,12 +124,13 @@ fun ActivityTile(onClick: () -> Unit = {}) {
 
 
 @Composable
-fun ShowDatePicker(onDateSelected: (Instant) ->Unit = {}
-){
+fun ShowDatePicker(
+    onDateSelected: (Instant) -> Unit = {}
+) {
     val context = LocalContext.current
-    val mYear: Int
-    val mMonth: Int
-    val mDay: Int
+    val year: Int
+    val month: Int
+    val day: Int
     val mHour: Int
     val mMinute: Int
 
@@ -127,9 +138,9 @@ fun ShowDatePicker(onDateSelected: (Instant) ->Unit = {}
     val calendar = Calendar.getInstance()
 
     // Fetching current year, month and day
-    mYear = calendar.get(Calendar.YEAR)
-    mMonth = calendar.get(Calendar.MONTH)
-    mDay = calendar.get(Calendar.DAY_OF_MONTH)
+    year = calendar.get(Calendar.YEAR)
+    month = calendar.get(Calendar.MONTH)
+    day = calendar.get(Calendar.DAY_OF_MONTH)
     mHour = calendar.get(Calendar.HOUR)
     mMinute = calendar.get(Calendar.MINUTE)
 
@@ -147,9 +158,9 @@ fun ShowDatePicker(onDateSelected: (Instant) ->Unit = {}
             val min = if (minute < 10) "0$minute" else minute.toString()
             time = "$hour:$min"
             parseDateFromString("$date $time")?.let {
-               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                   onDateSelected(it.atZone(ZoneId.systemDefault()).toInstant())
-               }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    onDateSelected(it.atZone(ZoneId.systemDefault()).toInstant())
+                }
             }
         },
         mHour,
@@ -158,32 +169,27 @@ fun ShowDatePicker(onDateSelected: (Instant) ->Unit = {}
     )
 
 
-    val datePicker  = DatePickerDialog(
+    val datePicker = DatePickerDialog(
         context,
         { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
             //convert mDayMonth and mMont to 2 digits
-            val month = if (mMonth < 10) "0$mMonth" else mMonth.toString()
-            val day = if (mDayOfMonth < 10) "0$mDayOfMonth" else mDayOfMonth.toString()
-            date = "$day/$month/$mYear"
+            val pickerMonth = if (mMonth < 10) "0${mMonth + 1}" else mMonth.toString()
+            val pickerDay = if (mDayOfMonth < 10) "0$mDayOfMonth" else mDayOfMonth.toString()
+            date = "$pickerDay/${pickerMonth}/$mYear"
             timePicker.show()
-        }, mYear, mMonth, mDay
+        }, year, month, day
     )
     datePicker.datePicker.minDate = calendar.timeInMillis
     datePicker.show()
 
-
-
-
-
 }
 
-fun parseDateFromString(value:String): LocalDateTime? {
+fun parseDateFromString(value: String): LocalDateTime? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
     }
     return null
 }
-
 
 
 @Composable
@@ -316,15 +322,25 @@ fun OpenDialog(
 
 
 @Composable
+@Preview
 fun LoadingCard() {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        CircularProgressIndicator()
-        Text(text = "Chargement...", style = MaterialTheme.typography.body1)
+        IncludeLottieFile(draw = R.raw.loading, modifier = Modifier.size(100.dp, 100.dp))
     }
+}
+
+@Composable
+fun IncludeLottieFile(draw: Int, modifier: Modifier) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(draw))
+    LottieAnimation(
+        composition,
+        iterations = LottieConstants.IterateForever,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -797,3 +813,7 @@ fun PaddyFieldForm(
     }
 }
 
+
+fun formatDateToHumanReadable(date: Date): String {
+    return SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault()).format(date)
+}

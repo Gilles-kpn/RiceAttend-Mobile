@@ -10,14 +10,14 @@ interface ActivityRepository {
 
     @GET("activity")
     @JvmSuppressWildcards
-    fun getActivities(@QueryMap params:Map<String, Any>):Call<Page<Activity>>
+    fun getActivities(@QueryMap params: Map<String, Any>): Call<Page<Activity>>
 
     @GET("activity/code")
-    fun get(@Path("code") code:String):Call<Activity>
+    fun get(@Path("code") code: String): Call<Activity>
 
 
     @POST("activity")
-    fun create(@Body activity: ActivityPayload):Call<Activity>
+    fun create(@Body activity: ActivityPayload): Call<Activity>
 
 
 }

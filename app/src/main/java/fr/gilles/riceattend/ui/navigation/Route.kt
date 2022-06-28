@@ -40,7 +40,8 @@ sealed class Route(
     object WorkerRoute : Route(path = "worker/{code}")
     object PaddyFieldRoute : Route(path = "paddyfield/{code}")
     object ActivitiesRoute : Route(path = "activities")
-    object ActivityCreationRoute:Route(path = "activity/create")
+    object ActivityRoute : Route(path = "activity/{code}")
+    object ActivityCreationRoute : Route(path = "activity/create")
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -131,12 +132,15 @@ fun NavigationContent(
                 )
             }
 
-            composable(Route.ActivityCreationRoute.path){
+            composable(Route.ActivityCreationRoute.path) {
                 MainScreen(
                     nav = navHostController,
                     snackbarHostState = snackbarHostState,
                     content = {
-                        ActivityCreationScreen()
+                        ActivityCreationScreen(
+                            onMenuClick = { navHostController.popBackStack() },
+                            navHostController = navHostController,
+                        )
                     },
                     scaffoldState = scaffoldState
                 )
@@ -149,7 +153,7 @@ fun NavigationContent(
                     content = {
                         ActivitiesFragment(
                             onMenuClick = { scope.launch { scaffoldState.drawerState.open() } },
-                            snackbarHostState= snackbarHostState,
+                            snackbarHostState = snackbarHostState,
                             navHostController = navHostController,
                         )
                     },

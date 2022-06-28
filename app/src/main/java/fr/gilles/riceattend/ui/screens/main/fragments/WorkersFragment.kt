@@ -70,7 +70,8 @@ fun WorkersFragment(
         Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp)) {
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 InputWidget(
                     state = viewModel.searchState,

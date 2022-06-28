@@ -54,217 +54,211 @@ fun PaddyFieldModelScreen(
             LoadingCard()
         }
         false -> {
-            when (viewModel.paddyField) {
-                null -> {
-                    LoadingCard()
-                }
-                else -> {
-                    val modalBottomSheetState =
-                        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-                    viewModel.paddyField?.let {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            AppBar(
-                                title = it.name,
-                                leftContent = {
-                                    IconButton(
-                                        onClick = {
-                                            navHostController.popBackStack()
-                                        },
-                                    ) {
-                                        Icon(
-                                            Icons.Outlined.ArrowBack,
-                                            "Back",
-                                            tint = MaterialTheme.colors.background
-                                        )
-                                    }
+            val modalBottomSheetState = rememberModalBottomSheetState(
+                initialValue = ModalBottomSheetValue.Hidden
+            )
+            viewModel.paddyField?.let {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AppBar(
+                        title = it.name,
+                        leftContent = {
+                            IconButton(
+                                onClick = {
+                                    navHostController.popBackStack()
                                 },
-                                rightContent = {
-                                    IconButton(onClick = { scope.launch { modalBottomSheetState.show() } }) {
-                                        Icon(
-                                            Icons.Outlined.Edit,
-                                            "Update",
-                                            tint = MaterialTheme.colors.background
-                                        )
-                                    }
-                                }
-                            )
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(10.dp)
                             ) {
-                                Text(
-                                    text = it.name,
-                                    style = MaterialTheme.typography.h6,
-                                    modifier = Modifier.padding(10.dp)
+                                Icon(
+                                    Icons.Outlined.ArrowBack,
+                                    "Back",
+                                    tint = MaterialTheme.colors.background
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                ) {
-                                    var expanded by remember { mutableStateOf(false) }
-                                    Image(
-                                        painter = rememberAsyncImagePainter(viewModel.paddyField!!.plant.image),
-                                        contentDescription = "Profile picture",
-                                        contentScale = ContentScale.FillWidth,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    listOf(Color.Transparent, Color.Black),
-                                                    startY = if (expanded) 100f else 300f,
-                                                )
-                                            )
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(12.dp),
-                                        contentAlignment = Alignment.BottomStart
-                                    ) {
-
-                                        Column(Modifier.fillMaxWidth()) {
-                                            Row(
-                                                Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = it.plant.name,
-                                                    fontSize = 20.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.White
-                                                )
-                                                IconButton(onClick = { expanded = !expanded }) {
-                                                    Icon(
-                                                        Icons.Outlined.ArrowDropDown,
-                                                        contentDescription = "View more",
-                                                        tint = Color.White
-                                                    )
-                                                }
-                                            }
-                                            androidx.compose.animation.AnimatedVisibility(visible = expanded) {
-                                                Text(
-                                                    text = it.plant.description,
-                                                    fontSize = 16.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.White
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            Icons.Outlined.Filter2,
-                                            contentDescription = "Number of plants"
-                                        )
-                                        Text(
-                                            text = "Nombre de plant",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Text(
-                                        text = it.numberOfPlants.toString() + " plants",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            Icons.Outlined.AreaChart,
-                                            contentDescription = "Supperfici"
-                                        )
-                                        Text(
-                                            text = "Superficie",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Text(
-                                        text = it.surface.value.toString() + " " + it.surface.unit,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 15.dp),
-                                    Arrangement.SpaceBetween,
-                                    Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Activites sur cette riziere",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    IconButton(onClick = { /*TODO*/ }) {
-                                        //filter
-                                        Icon(Icons.Outlined.FilterList, "Filter")
-                                    }
-                                }
-                                Divider(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp)
+                            }
+                        },
+                        rightContent = {
+                            IconButton(onClick = { scope.launch { modalBottomSheetState.show() } }) {
+                                Icon(
+                                    Icons.Outlined.Edit,
+                                    "Update",
+                                    tint = MaterialTheme.colors.background
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .verticalScroll(rememberScrollState())
-                                ) {}
                             }
                         }
-                    }
-                    ModalBottomSheetLayout(
-                        sheetContent = {
-                            PaddyFieldForm(
-                                title = "Modifier la riziere",
-                                paddyFormViewModel = viewModel.paddyfieldFormViewModel,
-                                plants = viewModel.plants,
-                                onClick = {
-                                    viewModel.update(onError = {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Une erreur est survenue \n$it",
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = it.name,
+                            style = MaterialTheme.typography.h6,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                        ) {
+                            var expanded by remember { mutableStateOf(false) }
+                            Image(
+                                painter = rememberAsyncImagePainter(viewModel.paddyField!!.plant.image),
+                                contentDescription = "Profile picture",
+                                contentScale = ContentScale.FillWidth,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(Color.Transparent, Color.Black),
+                                            startY = if (expanded) 100f else 300f,
+                                        )
+                                    )
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.BottomStart
+                            ) {
+
+                                Column(Modifier.fillMaxWidth()) {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = it.plant.name,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        IconButton(onClick = { expanded = !expanded }) {
+                                            Icon(
+                                                Icons.Outlined.ArrowDropDown,
+                                                contentDescription = "View more",
+                                                tint = Color.White
                                             )
                                         }
-                                    })
-                                },
-                                isLoading = viewModel.updateLoading,
-                                buttonText = "Modifier",
-
+                                    }
+                                    androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+                                        Text(
+                                            text = it.plant.description,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Outlined.Filter2,
+                                    contentDescription = "Number of plants"
                                 )
-                        },
-                        sheetState = modalBottomSheetState,
-                        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    ) {}
+                                Text(
+                                    text = "Nombre de plant",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = it.numberOfPlants.toString() + " plants",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Outlined.AreaChart,
+                                    contentDescription = "Supperfici"
+                                )
+                                Text(
+                                    text = "Superficie",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = it.surface.value.toString() + " " + it.surface.unit,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp),
+                            Arrangement.SpaceBetween,
+                            Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Activites sur cette riziere",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            IconButton(onClick = { /*TODO*/ }) {
+                                //filter
+                                Icon(Icons.Outlined.FilterList, "Filter")
+                            }
+                        }
+                        Divider(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {}
+                    }
                 }
             }
+            ModalBottomSheetLayout(
+                sheetContent = {
+                    PaddyFieldForm(
+                        title = "Modifier la riziere",
+                        paddyFormViewModel = viewModel.paddyfieldFormViewModel,
+                        plants = viewModel.plants,
+                        onClick = {
+                            viewModel.update(onError = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Une erreur est survenue \n$it",
+                                    )
+                                }
+                            })
+                        },
+                        isLoading = viewModel.updateLoading,
+                        buttonText = "Modifier",
+
+                        )
+                },
+                sheetState = modalBottomSheetState,
+                sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            ) {}
         }
     }
 }

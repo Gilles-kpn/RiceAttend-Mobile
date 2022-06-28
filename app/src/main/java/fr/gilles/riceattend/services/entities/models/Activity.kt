@@ -1,13 +1,13 @@
 package fr.gilles.riceattend.services.entities.models
 
 import com.google.gson.annotations.SerializedName
-import java.time.Instant
 import java.util.*
 
 data class Activity(
     @SerializedName("name") var name: String,
-    @SerializedName("startDate") var startDate: Date,
-    @SerializedName("endDate") var endDate: Date,
+    @SerializedName("description") var description: String,
+    @SerializedName("startInstant") var startDate: Date,
+    @SerializedName("endInstant") var endDate: Date,
     @SerializedName("status") var status: ActivityStatus,
     @SerializedName("estimatedPrice") var estimatedPrice: Double,
     @SerializedName("realPrice") var realPrice: Double,
@@ -38,14 +38,14 @@ data class ActivityResource(
 
 data class ActivityPayload(
     @SerializedName("name") var name: String,
-    @SerializedName("startDate") var startDate: String,
-    @SerializedName("endDate") var endDate: String,
+    @SerializedName("startInstant") var startDate: String,
+    @SerializedName("endInstant") var endDate: String,
     @SerializedName("description") var description: String,
-    @SerializedName("paddyFields") var paddyFields:List<String>,
-    @SerializedName("workers") var workers:List<String>,
-    @SerializedName("resources") var resources:List<ActivityResourcePayload>,
+    @SerializedName("paddyFields") var paddyFields: List<String>,
+    @SerializedName("workers") var workers: List<String>,
+    @SerializedName("resources") var resources: List<ActivityResourcePayload>,
 
-)
+    )
 
 enum class ActivityStatus(val value: String) {
     INIT("INIT"),

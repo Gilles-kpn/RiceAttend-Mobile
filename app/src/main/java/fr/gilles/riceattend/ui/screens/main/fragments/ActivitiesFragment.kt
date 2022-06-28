@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -16,11 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import fr.gilles.riceattend.R
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -40,9 +41,10 @@ import java.util.*
 @Composable
 fun ActivitiesFragment(
     onMenuClick: () -> Unit = {},
+    navHostController: NavHostController,
     scope: CoroutineScope = rememberCoroutineScope(),
     snackbarHostState: SnackbarHostState,
-    navHostController: NavHostController,
+
     viewModel: ActivitiesViewModel = remember { ActivitiesViewModel() }
 ) {
     Column(
@@ -120,7 +122,7 @@ fun ActivitiesFragment(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         it.content.forEach { activity ->
-                                            ActivityTile()
+                                            ActivityTile(activity = activity)
                                         }
                                     }
                                 }
@@ -172,23 +174,31 @@ class ActivitiesViewModel : ViewModel() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-@Preview("ActivitiesFragmentPreview", showBackground = true)
-fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { ActivityCreationViewModel() }) {
+fun ActivityCreationScreen(
+    viewModel: ActivityCreationViewModel = remember { ActivityCreationViewModel() },
+    onMenuClick: () -> Unit = {},
+    navHostController: NavHostController
+) {
     var currentStep by remember { mutableStateOf(0) }
     var currentStepHasError by remember { mutableStateOf(false) }
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AppBar(title = "Creation d'une activite", leftContent = {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onMenuClick) {
                 Icon(Icons.Outlined.ArrowBack, "Menu", tint = MaterialTheme.colors.background)
             }
         }, rightContent = {
             IconButton(onClick = { }) {}
         })
         Row(
-            Modifier.fillMaxWidth().padding(vertical = 15.dp, horizontal = 20.dp).height(40.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 15.dp, horizontal = 20.dp)
+                .height(40.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             when (currentStep) {
@@ -208,24 +218,37 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                 }
             }
         }
-        Column(modifier = Modifier.fillMaxSize().padding(10.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
         ) {
-            if(currentStepHasError)
+            if (currentStepHasError)
                 Card(
                     Modifier
                         .fillMaxWidth()
                         .padding(vertical = 5.dp, horizontal = 10.dp)
                         .clip(RoundedCornerShape(10.dp)),
-                    backgroundColor = Color.Red.copy(alpha = 0.5f)
+                    backgroundColor = Color.Red.copy(alpha = 0.2f)
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth(),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(
-                            text = viewModel.activityFormViewModel.errorsStepMessage[currentStep](),
-                            modifier = Modifier.padding(horizontal = 10.dp),
-                            color = MaterialTheme.colors.contentColorFor(Color.Red.copy(alpha = 0.5f))
-                        )
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IncludeLottieFile(
+                                draw = R.raw.error, modifier = Modifier
+                                    .size(25.dp, 25.dp)
+                                    .padding(start = 10.dp)
+                            )
+                            Text(
+                                text = viewModel.activityFormViewModel.errorsStepMessage[currentStep](),
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                                color = MaterialTheme.colors.contentColorFor(Color.Red.copy(alpha = 0.5f))
+                            )
+                        }
+
                         IconButton(onClick = { currentStepHasError = false }) {
                             Icon(Icons.Default.Close, "Close error")
                         }
@@ -233,11 +256,11 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                 }
             when (currentStep) {
                 0 -> {
-                    var dateSelectListener by remember { mutableStateOf<(Instant) -> Unit> ( {} ) }
+                    var dateSelectListener by remember { mutableStateOf<(Instant) -> Unit>({}) }
                     var showDateDialog by remember {
                         mutableStateOf(false)
                     }
-                    if(showDateDialog) ShowDatePicker(onDateSelected = dateSelectListener)
+                    if (showDateDialog) ShowDatePicker(onDateSelected = dateSelectListener)
 
                     Text(
                         text = "Les champs suivis de (*) sont les champs obligatoires",
@@ -304,7 +327,6 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                                     viewModel.activityFormViewModel.endDate.validate()
                                     showDateDialog = false
                                 }
-
                                 showDateDialog = true
                             }) {
                                 Icon(Icons.Outlined.CalendarToday, "Calendrier")
@@ -498,7 +520,8 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                                                                         activityResource.resourceCode == resource.code
                                                                     }.map { activityResource ->
                                                                         activityResource.quantity
-                                                                    }.findFirst().orElse(0f).toInt(),
+                                                                    }.findFirst().orElse(0f)
+                                                                    .toInt(),
                                                                 validator = { quantity -> quantity > 0 && quantity <= resource.quantity },
                                                                 errorMessage = { "La quantité doit être comprise entre 1 et ${resource.quantity}" },
 
@@ -531,43 +554,97 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                     }
                 }
                 4 -> {
-                    when(viewModel.loading){
+                    when (viewModel.loading) {
                         true -> LoadingCard()
-                        false ->{
+                        false -> {
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
-                            ){
-                                when(viewModel.createdActivity){
-                                    null ->{
+                            ) {
+                                when (viewModel.createdActivity) {
+                                    null -> {
                                         Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(10.dp),
                                             elevation = 10.dp,
                                             backgroundColor = MaterialTheme.colors.onError
-                                        ){
-                                            Text(
-                                                text = "Erreur lors de la création de l'activité",
-                                                modifier = Modifier.padding(10.dp),
-                                                color = MaterialTheme.colors.contentColorFor(MaterialTheme.colors.onError)
-                                            )
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize(),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(
+                                                    text = "Erreur lors de la création de l'activité",
+                                                    modifier = Modifier.padding(10.dp),
+                                                )
+                                                Button(
+                                                    onClick = { currentStep = 0 },
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            vertical = 5.dp,
+                                                            horizontal = 12.dp
+                                                        )
+                                                        .clip(CircleShape)
+                                                ) {
+                                                    Text(
+                                                        text = "Veuillez réessayer",
+                                                        modifier = Modifier.padding(10.dp),
+                                                    )
+                                                }
+                                            }
+
                                         }
                                     }
-                                    else ->{
+                                    else -> {
                                         Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(10.dp),
                                             elevation = 10.dp,
-                                            backgroundColor = MaterialTheme.colors.onSurface
-                                        ){
-                                            Text(
-                                                text = "Activité créée avec succès",
-                                                modifier = Modifier.padding(10.dp),
-                                                color = MaterialTheme.colors.contentColorFor(MaterialTheme.colors.onSurface)
-                                            )
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize(),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                IncludeLottieFile(
+                                                    draw = R.raw.successful,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(200.dp)
+                                                )
+                                                Text(
+                                                    text = "Activité créée avec succès",
+                                                    modifier = Modifier.padding(10.dp),
+                                                    color = MaterialTheme.colors.contentColorFor(
+                                                        MaterialTheme.colors.onSurface
+                                                    )
+                                                )
+                                                Button(
+                                                    onClick = {
+                                                        navHostController.navigate(
+                                                            Route.ActivityRoute.path.replace(
+                                                                "{code}",
+                                                                viewModel.createdActivity!!.code
+                                                            )
+                                                        )
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            vertical = 5.dp,
+                                                            horizontal = 12.dp
+                                                        )
+                                                        .clip(RoundedCornerShape(15.dp))
+                                                ) {
+                                                    Text(text = "Voir l'activité")
+                                                }
+                                            }
+
                                         }
                                     }
                                 }
@@ -582,7 +659,7 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                 .fillMaxWidth()
                 .padding(10.dp), verticalAlignment = Alignment.CenterVertically
         ) {
-            if (currentStep > 0) {
+            if (currentStep in 1..3) {
                 Button(
                     onClick = { currentStep-- },
                     Modifier
@@ -598,9 +675,9 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
             if (currentStep < 4) {
                 Button(
                     onClick = {
-                        if(viewModel.activityFormViewModel.stepsValidator[currentStep]()) {
+                        if (viewModel.activityFormViewModel.stepsValidator[currentStep]()) {
                             currentStepHasError = false
-                            if(currentStep == 3) viewModel.createActivity()
+                            if (currentStep == 3) viewModel.createActivity()
                             currentStep++
                         } else currentStepHasError = true
                     },
@@ -609,7 +686,7 @@ fun ActivityCreationScreen(viewModel: ActivityCreationViewModel = remember { Act
                         .padding(horizontal = 8.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if(currentStep != 3)
+                        if (currentStep != 3)
                             Text("Suivant", modifier = Modifier.padding(horizontal = 10.dp))
                         else Text("Créer", modifier = Modifier.padding(horizontal = 10.dp))
                         Icon(Icons.Outlined.ArrowForward, "Suivant")
@@ -689,6 +766,7 @@ class ActivityCreationViewModel : ViewModel() {
             ApiEndpoint.activityRepository.create(activityFormViewModel.toActivityPayload())
                 .enqueue(object : ApiCallback<Activity>() {
                     override fun onSuccess(response: Activity) {
+                        createdActivity = response
                         loading = false
                     }
 
@@ -738,7 +816,7 @@ class ActivityFormViewModel {
             it.isAfter(startDate.value)
         },
         errorMessage = {
-            "Date de fin requise apres ${startDate.value.toString()}"
+            "Date de fin requise apres ${startDate.value}"
         }
     ))
     var paddyFields by mutableStateOf(TextFieldState<List<PaddyField>>(
@@ -772,21 +850,23 @@ class ActivityFormViewModel {
 
 
     val stepsValidator by mutableStateOf(
-            listOf(
-                { name.isValid() && description.isValid() },
-                { paddyFields.isValid() },
-                { workers.isValid() },
-                { activityResources.isValid() }
-            )
-        )
-
-    val  errorsStepMessage by mutableStateOf(
         listOf(
-            { if(name.isValid() && description.isValid() &&  startDate.isValid() && endDate.isValid()) ""
-            else "Veuillez remplir  les champs obligatoires" },
-            { if(paddyFields.isValid()) "" else "Veuillez selectionner au moins une riziere" },
-            { if(workers.isValid()) "" else "Veuillez selectionner au moins un travailleur" },
-            { if(activityResources.isValid()) "" else "Veuillez selectionner au moins un ressource" }
+            { name.isValid() && description.isValid() },
+            { paddyFields.isValid() },
+            { workers.isValid() },
+            { activityResources.isValid() }
+        )
+    )
+
+    val errorsStepMessage by mutableStateOf(
+        listOf(
+            {
+                if (name.isValid() && description.isValid() && startDate.isValid() && endDate.isValid()) ""
+                else "Veuillez remplir  les champs obligatoires"
+            },
+            { if (paddyFields.isValid()) "" else "Veuillez selectionner au moins une riziere" },
+            { if (workers.isValid()) "" else "Veuillez selectionner au moins un travailleur" },
+            { if (activityResources.isValid()) "" else "Veuillez selectionner au moins un ressource" }
         )
     )
 
@@ -807,7 +887,7 @@ class ActivityFormViewModel {
             endDate = endDate.value.toString(),
             paddyFields = paddyFields.value.map { it.code },
             workers = workers.value.map { it.code },
-            resources =activityResources.value.map {
+            resources = activityResources.value.map {
                 ActivityResourcePayload(resourceCode = it.resourceCode, quantity = it.quantity)
             }
         )
