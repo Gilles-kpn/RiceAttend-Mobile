@@ -17,7 +17,7 @@ data class Activity(
 data class ActivityPaddyField(
     @SerializedName("activity") var activity: Activity,
     @SerializedName("paddyField") var paddyField: PaddyField,
-    @SerializedName("status") var status: ActivityStatus,
+    @SerializedName("activityStatus") var status: ActivityStatus,
 ) : Audit()
 
 
@@ -31,7 +31,7 @@ data class ActivityWorker(
 data class ActivityResource(
     @SerializedName("activity") var activity: Activity,
     @SerializedName("resource") var resource: Resource,
-    @SerializedName("quantity") var quantity: Float,
+    @SerializedName("usedQuantity") var quantity: Float,
     @SerializedName("value") var value: Double,
 ) : Audit()
 

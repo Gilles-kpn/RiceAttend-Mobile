@@ -129,7 +129,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                         .fillMaxWidth()
                         .padding(6.dp)
                         .height(50.dp)
-                        .clip(RoundedCornerShape(30.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .clickable {
                             nav.navigate(it["route"] as String)
                             scope.launch { scaffoldState.drawerState.close() }
@@ -178,7 +178,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                     .fillMaxWidth()
                     .padding(6.dp)
                     .height(50.dp)
-                    .clip(RoundedCornerShape(30.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable { },
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -199,7 +199,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                     .fillMaxWidth()
                     .padding(6.dp)
                     .height(50.dp)
-                    .clip(RoundedCornerShape(30.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable {
                         SessionManager.clear()
                         nav.navigate(Route.LoginRoute.path) {

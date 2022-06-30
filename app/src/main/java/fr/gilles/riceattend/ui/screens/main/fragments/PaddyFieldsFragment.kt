@@ -1,6 +1,8 @@
 package fr.gilles.riceattend.ui.screens.main.fragments
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +33,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
+@RequiresApi(Build.VERSION_CODES.O)
 fun PaddyFieldsFragment(
     onMenuClick: () -> Unit = {},
     viewModel: PaddyFieldsViewModel = remember { PaddyFieldsViewModel() },
@@ -167,6 +170,8 @@ fun PaddyFieldsFragment(
 
 }
 
+
+@RequiresApi(Build.VERSION_CODES.O)
 class PaddyFieldsViewModel : ViewModel() {
     val searchState by mutableStateOf(TextFieldState(validator = {
         it.isNotBlank() && it.isNotEmpty()

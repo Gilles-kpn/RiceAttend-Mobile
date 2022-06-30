@@ -1,6 +1,8 @@
 package fr.gilles.riceattend.ui.widget
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,10 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -36,8 +37,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 @Preview
+@RequiresApi(Build.VERSION_CODES.O)
 fun RegisterForm(
-    viewModel: RegisterFormViewModel = RegisterFormViewModel(),
+    viewModel: RegisterFormViewModel = remember{ RegisterFormViewModel() },
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}
@@ -233,8 +235,8 @@ fun RegisterForm(
     }
 }
 
-
-class RegisterFormViewModel {
+@RequiresApi(Build.VERSION_CODES.O)
+class RegisterFormViewModel: ViewModel() {
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
     var passwordVisible by mutableStateOf(false)
@@ -251,8 +253,9 @@ class RegisterFormViewModel {
     var loading by mutableStateOf(false)
 
 
+
     fun register(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             loading = true
             ApiEndpoint.authRepository.register(
                 RegisterUser(

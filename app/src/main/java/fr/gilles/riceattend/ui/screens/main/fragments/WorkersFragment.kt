@@ -1,6 +1,8 @@
 package fr.gilles.riceattend.ui.screens.main.fragments
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +35,7 @@ import java.util.regex.Pattern
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
+@RequiresApi(Build.VERSION_CODES.O)
 fun WorkersFragment(
     onMenuClick: () -> Unit = {},
     navHostController: NavHostController,
@@ -147,18 +150,22 @@ fun WorkersFragment(
     }
     ModalBottomSheetLayout(
         sheetContent = {
-            WorkerForm(onSubmit = {
-                viewModel.create(
-                    onSuccess = { created = true },
-                    onError = { scope.launch { snackbarHostState.showSnackbar(it) } }
-                )
-            }, isLoading = viewModel.creationLoading)
+            WorkerForm(
+                workerFormViewModel = viewModel.workerFormViewModel,
+                onSubmit = {
+                    viewModel.create(
+                        onSuccess = { created = true },
+                        onError = { scope.launch { snackbarHostState.showSnackbar(it) } }
+                    )
+                }, isLoading = viewModel.creationLoading
+            )
         },
         sheetState = modalBottomSheetState,
         sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {}
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 class WorkersViewModel : ViewModel() {
     var searchState by mutableStateOf(
         TextFieldState(
@@ -228,14 +235,14 @@ class WorkerFormViewModel {
         TextFieldState(
             defaultValue = "",
             validator = { it.isNotBlank() },
-            errorMessage = { "Prénom requis" },
+            errorMessage = { "Nom requis" },
         )
     )
     var lastNameState by mutableStateOf(
         TextFieldState(
             defaultValue = "",
             validator = { it.isNotBlank() },
-            errorMessage = { "Nom de famille requis" },
+            errorMessage = { "Prénom requis" },
         )
     )
     var phoneState by mutableStateOf(

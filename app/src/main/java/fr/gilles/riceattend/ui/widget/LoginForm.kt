@@ -1,5 +1,7 @@
 package fr.gilles.riceattend.ui.widget
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,10 +12,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -41,8 +41,9 @@ import kotlinx.coroutines.launch
 
 @Preview
 @Composable
+@RequiresApi(Build.VERSION_CODES.O)
 fun LoginFormWidget(
-    viewModel: LoginFormViewModel = LoginFormViewModel(),
+    viewModel: LoginFormViewModel = remember{ LoginFormViewModel() },
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}
@@ -58,7 +59,7 @@ fun LoginFormWidget(
             modifier = Modifier
                 .padding(top = 8.dp, start = 10.dp, end = 10.dp, bottom = 15.dp)
                 .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.SpaceBetween
 
         ) {
@@ -84,6 +85,9 @@ fun LoginFormWidget(
                     viewModel.emailState.value = it
                     viewModel.emailState.validate()
                 },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType =  KeyboardType.Email
+                ),
                 label = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -192,7 +196,7 @@ fun LoginFormWidget(
     }
 
 }
-
+@RequiresApi(Build.VERSION_CODES.O)
 class LoginFormViewModel : ViewModel() {
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
@@ -200,8 +204,9 @@ class LoginFormViewModel : ViewModel() {
     var loading by mutableStateOf(false)
 
 
+
     fun login(onError: (String) -> Unit, onSuccess: () -> Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             loading = true
             ApiEndpoint.authRepository.login(
                 LoginUser(emailState.value, passwordState.value)
@@ -211,7 +216,6 @@ class LoginFormViewModel : ViewModel() {
                     SessionManager.session.authorization = response
                     currentUser(onSuccess, onError)
                 }
-
                 override fun onError(error: ApiResponseError) {
                     loading = false
                     onError("Identifiants incorrects ou invalides")
@@ -221,17 +225,20 @@ class LoginFormViewModel : ViewModel() {
     }
 
     fun currentUser(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        ApiEndpoint.authRepository.current().enqueue(object : ApiCallback<User>() {
-            override fun onSuccess(response: User) {
-                SessionManager.session.user = response
-                SessionManager.store()
-                onSuccess()
-            }
+        viewModelScope.launch {
+            ApiEndpoint.authRepository.current().enqueue(object : ApiCallback<User>() {
+                override fun onSuccess(response: User) {
+                    SessionManager.session.user = response
+                    SessionManager.store()
+                    onSuccess()
+                }
 
-            override fun onError(error: ApiResponseError) {
-                onError("Une erreur est survenue")
-            }
+                override fun onError(error: ApiResponseError) {
+                    onError("Une erreur est survenue")
+                }
 
-        })
+            })
+        }
+
     }
 }

@@ -2,7 +2,9 @@ package fr.gilles.riceattend.ui.screens.main.modelstemplate
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,16 +40,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
+@RequiresApi(Build.VERSION_CODES.O)
 fun WorkerModelScreen(
     navHostController: NavHostController,
     snackbarHostState: SnackbarHostState,
-    viewModel: WorkerViewModel = remember {
-        WorkerViewModel(
-            navHostController.previousBackStackEntry?.arguments?.getString(
-                "code"
-            ) ?: ""
-        )
-    }
+    viewModel: WorkerViewModel
 ) {
     val scope = rememberCoroutineScope()
     val modalBottomSheetState =
@@ -240,7 +237,7 @@ fun WorkerModelScreen(
     ) {}
 }
 
-
+@RequiresApi(Build.VERSION_CODES.O)
 class WorkerViewModel(val code: String) : ViewModel() {
     var loading by mutableStateOf(false)
     var worker by mutableStateOf<Worker?>(null)
@@ -271,7 +268,6 @@ class WorkerViewModel(val code: String) : ViewModel() {
     private fun getWorker() {
         loading = true
         viewModelScope.launch {
-            Log.d("WorkerViewModel", "getWorker $code")
             ApiEndpoint.workerRepository.get(code)
                 .enqueue(object : ApiCallback<Worker>() {
                     override fun onSuccess(response: Worker) {

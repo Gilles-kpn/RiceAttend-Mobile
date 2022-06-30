@@ -38,6 +38,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ActivitiesFragment(
     onMenuClick: () -> Unit = {},
@@ -122,7 +123,15 @@ fun ActivitiesFragment(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         it.content.forEach { activity ->
-                                            ActivityTile(activity = activity)
+                                            ActivityTile(activity = activity, onClick = {
+                                                navHostController.navigate(
+                                                    Route.ActivityRoute.path.replace(
+                                                        "{code}",
+                                                        activity.code
+                                                    )
+                                                ){
+                                                }
+                                            })
                                         }
                                     }
                                 }
@@ -135,7 +144,7 @@ fun ActivitiesFragment(
     }
 }
 
-
+@RequiresApi(Build.VERSION_CODES.O)
 class ActivitiesViewModel : ViewModel() {
     var activities by mutableStateOf<Page<Activity>?>(null)
     var loading by mutableStateOf(false)
@@ -149,6 +158,7 @@ class ActivitiesViewModel : ViewModel() {
     init {
         loadActivities()
     }
+
 
     private fun loadActivities() {
         loading = true

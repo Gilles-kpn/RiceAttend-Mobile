@@ -17,53 +17,55 @@ import java.util.concurrent.TimeUnit
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ApiService {
-    private val baseUrl: String = "https://riceattend.herokuapp.com/"
+    companion object {
+        private const val baseUrl: String = "https://riceattend.herokuapp.com/"
 
-    private val gson: Gson by lazy {
-        val builder = GsonBuilder()
-        builder.registerTypeAdapter(
-            Date::class.java,
-            JsonDeserializer<Any?> { json, _, _ -> Date(json.asJsonPrimitive.asLong * 1000) })
-        builder.create()
-    }
-
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor(headerInterceptor)
-            .addInterceptor(logger)
-            .connectTimeout(1, TimeUnit.MINUTES)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(15, TimeUnit.SECONDS)
-            .build()
-    }
-
-    private val headerInterceptor = Interceptor { chain ->
-        chain.proceed(
-            request = chain.request().newBuilder().addHeader(
-                "Authorization",
-                SessionManager.session.authorization
-            ).build()
-        )
-    }
-
-
-    private val logger: HttpLoggingInterceptor = run {
-        val httpLoggingInterceptor = HttpLoggingInterceptor()
-        httpLoggingInterceptor.apply {
-            httpLoggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+        private val gson: Gson by lazy {
+            val builder = GsonBuilder()
+            builder.registerTypeAdapter(
+                Date::class.java,
+                JsonDeserializer<Any?> { json, _, _ -> Date(json.asJsonPrimitive.asLong * 1000) })
+            builder.create()
         }
-    }
 
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .client(httpClient)
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-    }
+        private val httpClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .addInterceptor(headerInterceptor)
+                .addInterceptor(logger)
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .build()
+        }
 
-    fun <T> buildRepository(service: Class<T>): T {
-        return retrofit.create(service)
+        private val headerInterceptor = Interceptor { chain ->
+            chain.proceed(
+                request = chain.request().newBuilder().addHeader(
+                    "Authorization",
+                    SessionManager.session.authorization
+                ).build()
+            )
+        }
+
+
+        private val logger: HttpLoggingInterceptor = run {
+            val httpLoggingInterceptor = HttpLoggingInterceptor()
+            httpLoggingInterceptor.apply {
+                httpLoggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+            }
+        }
+
+        private val retrofit: Retrofit by lazy {
+            Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(httpClient)
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build()
+        }
+
+        fun <T> buildRepository(service: Class<T>): T {
+            return retrofit.create(service)
+        }
     }
 }

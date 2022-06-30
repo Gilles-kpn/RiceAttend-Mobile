@@ -1,6 +1,8 @@
 package fr.gilles.riceattend.ui.screens.main.modelstemplate
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -32,31 +34,28 @@ import fr.gilles.riceattend.ui.screens.main.fragments.PaddyFieldFormViewModel
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
 import fr.gilles.riceattend.ui.widget.components.PaddyFieldForm
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PaddyFieldModelScreen(
-    scope: CoroutineScope = rememberCoroutineScope(),
     snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
-    viewModel: PaddyFieldViewModel = remember {
-        PaddyFieldViewModel(
-            navHostController.previousBackStackEntry?.arguments?.getString(
-                "code"
-            ) ?: ""
-        )
-    }
+    viewModel: PaddyFieldViewModel
 ) {
+
+    val scope = rememberCoroutineScope()
+    val modalBottomSheetState = rememberModalBottomSheetState(
+        initialValue = ModalBottomSheetValue.Hidden
+    )
     when (viewModel.loading) {
         true -> {
             LoadingCard()
         }
         false -> {
-            val modalBottomSheetState = rememberModalBottomSheetState(
-                initialValue = ModalBottomSheetValue.Hidden
-            )
+
             viewModel.paddyField?.let {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -236,34 +235,35 @@ fun PaddyFieldModelScreen(
                     }
                 }
             }
-            ModalBottomSheetLayout(
-                sheetContent = {
-                    PaddyFieldForm(
-                        title = "Modifier la riziere",
-                        paddyFormViewModel = viewModel.paddyfieldFormViewModel,
-                        plants = viewModel.plants,
-                        onClick = {
-                            viewModel.update(onError = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Une erreur est survenue \n$it",
-                                    )
-                                }
-                            })
-                        },
-                        isLoading = viewModel.updateLoading,
-                        buttonText = "Modifier",
 
-                        )
-                },
-                sheetState = modalBottomSheetState,
-                sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            ) {}
         }
     }
+    ModalBottomSheetLayout(
+        sheetContent = {
+            PaddyFieldForm(
+                title = "Modifier la riziere",
+                paddyFormViewModel = viewModel.paddyfieldFormViewModel,
+                plants = viewModel.plants,
+                onClick = {
+                    viewModel.update(onError = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Une erreur est survenue \n$it",
+                            )
+                        }
+                    })
+                },
+                isLoading = viewModel.updateLoading,
+                buttonText = "Modifier",
+
+                )
+        },
+        sheetState = modalBottomSheetState,
+        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    ) {}
 }
 
-
+@RequiresApi(Build.VERSION_CODES.O)
 class PaddyFieldViewModel(val code: String) : ViewModel() {
     var loading by mutableStateOf(false)
     var paddyField by mutableStateOf<PaddyField?>(null)
@@ -274,10 +274,9 @@ class PaddyFieldViewModel(val code: String) : ViewModel() {
 
     init {
         loadPaddyField()
-        loadPlants()
     }
 
-    private fun loadPaddyField() {
+     private fun loadPaddyField() {
         loading = true
         viewModelScope.launch {
             ApiEndpoint.paddyFieldRepository.get(code)
@@ -355,5 +354,6 @@ class PaddyFieldViewModel(val code: String) : ViewModel() {
                     }
                 })
         }
+
     }
 }

@@ -18,10 +18,7 @@ import fr.gilles.riceattend.ui.screens.auth.LoginScreen
 import fr.gilles.riceattend.ui.screens.auth.RegisterScreen
 import fr.gilles.riceattend.ui.screens.main.MainScreen
 import fr.gilles.riceattend.ui.screens.main.fragments.*
-import fr.gilles.riceattend.ui.screens.main.modelstemplate.PaddyFieldModelScreen
-import fr.gilles.riceattend.ui.screens.main.modelstemplate.PaddyFieldViewModel
-import fr.gilles.riceattend.ui.screens.main.modelstemplate.WorkerModelScreen
-import fr.gilles.riceattend.ui.screens.main.modelstemplate.WorkerViewModel
+import fr.gilles.riceattend.ui.screens.main.modelstemplate.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -173,6 +170,20 @@ fun NavigationContent(
                     )
                 }
 
+            }
+
+            composable(
+                Route.ActivityRoute.path,
+                arguments = listOf(navArgument("code") { type = NavType.StringType })
+            ) {
+                it.arguments?.let { bundle ->
+                    ActivityModelScreen(
+                        onMenuClick = { scope.launch { navHostController.popBackStack() } },
+                        navHostController = navHostController,
+                        snackbarHostState = snackbarHostState,
+                        viewModel = ActivityViewModel(bundle["code"] as String),
+                    )
+                }
             }
             composable(
                 Route.PaddyFieldRoute.path,

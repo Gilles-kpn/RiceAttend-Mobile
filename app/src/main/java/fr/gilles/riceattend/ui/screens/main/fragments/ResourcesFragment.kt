@@ -1,5 +1,7 @@
 package fr.gilles.riceattend.ui.screens.main.fragments
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 @Preview(showBackground = true)
+@RequiresApi(Build.VERSION_CODES.O)
 fun ResourcesFragment(
     onMenuClick: () -> Unit = {},
     scope: CoroutineScope = rememberCoroutineScope(),
@@ -208,6 +211,7 @@ fun ResourcesFragment(
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 class ResourcesViewModel : ViewModel() {
     var resources by mutableStateOf<Page<Resource>?>(null)
     var params by mutableStateOf(Params())

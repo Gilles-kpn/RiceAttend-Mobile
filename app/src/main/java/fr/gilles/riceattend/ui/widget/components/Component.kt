@@ -18,9 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -55,34 +52,15 @@ import java.util.*
 fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
     Card(modifier = Modifier
         .fillMaxWidth()
-        .height(120.dp)
-        .padding(vertical = 7.dp)
-        .clickable { onClick() }) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Column(
-                Modifier
-                    .fillMaxHeight()
-                    .weight(2f), horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                //vertical Divider
-                Divider(
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                    thickness = 1.dp,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(3.dp)
-                        .padding(vertical = 2.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(MaterialTheme.colors.primary, Color.White),
-                                startY = 1 * ((Date().time - activity.startDate.time) / (activity.endDate.time - activity.startDate.time)).toFloat(),
-                                tileMode = TileMode.Clamp
-                            )
-                        )
-                )
-            }
-
+        .padding(vertical = 3.dp)
+        .clip(RoundedCornerShape(5.dp))
+        .clickable { onClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically, modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
             Column(
                 modifier = Modifier
                     .padding(vertical = 3.dp, horizontal = 10.dp)
@@ -92,12 +70,11 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 10.dp),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(activity.name, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text(activity.name, style = MaterialTheme.typography.h1)
                     Text(
                         text = activity.status.value, modifier = Modifier
                             .clip(CircleShape)
@@ -106,15 +83,11 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
                     )
                 }
                 Text(
-                    text = activity.description,
-                    modifier = Modifier.padding(bottom = 5.dp)
-                )
-                Text(
                     text = "${formatDateToHumanReadable(activity.startDate)} - ${
                         formatDateToHumanReadable(
                             activity.endDate
                         )
-                    }", modifier = Modifier.padding(bottom = 5.dp)
+                    }", modifier = Modifier
                 )
             }
         }
@@ -192,12 +165,13 @@ fun parseDateFromString(value: String): LocalDateTime? {
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WorkerTile(worker: Worker, onClick: (worker: Worker) -> Unit = {}) {
+fun WorkerTile(worker: Worker, onClick: () -> Unit = {}, onLongClick: () -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clickable { onClick(worker) }
+            .combinedClickable(onClick = onClick , onLongClick = onLongClick)
             .padding(start = 10.dp)
     ) {
         Icon(Icons.Outlined.Person, "worker icon")
@@ -228,14 +202,21 @@ fun WorkerTile(worker: Worker, onClick: (worker: Worker) -> Unit = {}) {
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PaddyFieldTile(paddyField: PaddyField, onClick: () -> Unit = {}) {
+fun PaddyFieldTile(paddyField: PaddyField,
+                   onClick: () -> Unit = {},
+                   onLongClick: () -> Unit = {},
+                   badgeContent: @Composable () -> Unit = {}) {
     Log.d("paddyfield", "paddyfield  ==> $paddyField")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
-            .clickable { onClick() }
+            .combinedClickable (
+                onClick = onClick,
+                onLongClick = onLongClick
+                )
     ) {
         Icon(
             Icons.Outlined.Landscape,
@@ -255,12 +236,7 @@ fun PaddyFieldTile(paddyField: PaddyField, onClick: () -> Unit = {}) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(paddyField.name, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                Text(
-                    text = "Occupe", modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colors.primary)
-                        .padding(all = 5.dp), color = MaterialTheme.colors.background
-                )
+                badgeContent()
             }
             Text(text = "Plant cultivable: " + paddyField.plant.name)
             Text(text = "Surface cultivable: " + paddyField.surface.value.toString() + " " + paddyField.surface.unit)
@@ -556,7 +532,7 @@ fun AppBar(
 
 @Composable
 fun WorkerForm(
-    workerFormViewModel: WorkerFormViewModel = WorkerFormViewModel(),
+    workerFormViewModel: WorkerFormViewModel = remember { WorkerFormViewModel() },
     onSubmit: () -> Unit = {},
     isLoading: Boolean = false,
     buttonText: String = "Créer",
@@ -683,10 +659,9 @@ fun ResourceTile(
             }
         }
         Column {
-            Text(resource.name, style = MaterialTheme.typography.h6)
+            Text(resource.name, style = MaterialTheme.typography.h1)
             Text("Quantité Restante: ${resource.quantity}")
             Text("Prix Unitaire: ${resource.unitPrice}")
-            Text("Prix Total: ${resource.unitPrice * resource.quantity}")
         }
     }
 }
