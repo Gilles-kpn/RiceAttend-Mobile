@@ -23,8 +23,3 @@ data class WorkerPayload(
     @SerializedName("phone") var phone: String
 )
 
-data class WorkerActivity(
-    @SerializedName("worker") var worker: Worker,
-    @SerializedName("activity") var activity: Activity,
-    @SerializedName("price") var startDate: String
-) : Audit()

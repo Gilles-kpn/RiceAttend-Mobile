@@ -27,15 +27,12 @@ import androidx.navigation.NavHostController
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.Activity
-import fr.gilles.riceattend.services.entities.models.ActivityPaddyField
-import fr.gilles.riceattend.services.entities.models.ActivityResource
-import fr.gilles.riceattend.services.entities.models.ActivityWorker
+import fr.gilles.riceattend.services.entities.models.*
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.launch
 import java.time.Duration
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ActivityModelScreen(
@@ -52,6 +49,12 @@ fun ActivityModelScreen(
                 null -> {}
                 else -> {
                     viewModel.activity?.let {
+                        val addPaddyFieldModalBottomSheetState = rememberModalBottomSheetState(
+                            initialValue = ModalBottomSheetValue.Hidden
+                        )
+                        val addWorkersModalBottomSheetState = rememberModalBottomSheetState(
+                            initialValue = ModalBottomSheetValue.Hidden
+                        )
                         Column(modifier = Modifier.fillMaxSize()) {
                             Column(
                                 modifier = Modifier
@@ -61,31 +64,88 @@ fun ActivityModelScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    IconButton(onClick = onMenuClick) {
-                                        Icon(
-                                            Icons.Outlined.ArrowBack,
-                                            "Back ",
-                                            tint = MaterialTheme.colors.background
+                                    modifier =Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ){
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.Start,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        IconButton(onClick = onMenuClick) {
+                                            Icon(
+                                                Icons.Outlined.ArrowBack,
+                                                "Back ",
+                                                tint = MaterialTheme.colors.background
+                                            )
+                                        }
+                                        Text(
+                                            text = it.name,
+                                            style = MaterialTheme.typography.h1,
+                                            color = MaterialTheme.colors.background,
+                                            modifier = Modifier.padding(start = 10.dp)
                                         )
                                     }
-                                    Text(
-                                        text = it.name,
-                                        style = MaterialTheme.typography.h1,
-                                        color = MaterialTheme.colors.background,
-                                        modifier = Modifier.padding(start = 10.dp)
-                                    )
+
+                                   IconButton(onClick = {  }, modifier =Modifier.padding(end = 12.dp)) {
+                                       Icon(
+                                           Icons.Outlined.MoreVert,
+                                           "View More",
+                                           tint = MaterialTheme.colors.background
+                                       )
+                                   }
+                                    //actions
+                                    val actions = remember {
+                                        mutableListOf(
+                                            mapOf(
+                                                "title" to "Modifier",
+                                                "icon" to Icons.Outlined.Edit,
+                                                "action" to {
+
+                                                }
+                                            ),
+                                             mapOf(
+                                                 "title" to "Marquer comme debute",
+                                                 "icon" to Icons.Outlined.PlayArrow,
+                                                 "action" to {
+                                                     viewModel.maskAsStarted()
+                                                 }
+                                             ),
+                                            mapOf(
+                                                "title" to "Marquer comme fait",
+                                                "icon" to Icons.Outlined.Done,
+                                                "action" to {
+                                                    viewModel.markAsDone()
+                                                }
+
+
+                                            ),
+                                            mapOf(
+                                                "title" to "Annuler",
+                                                "icon" to Icons.Outlined.Cancel,
+                                                "action" to {
+                                                    viewModel.cancelActivity()
+                                                }
+                                            ),
+                                            mapOf(
+                                                "title" to "Supprimer",
+                                                "icon" to Icons.Outlined.Delete,
+                                                "action" to {
+                                                    viewModel.deleteActivity()
+                                                }
+                                            )
+                                        )
+                                    }
                                 }
+
                                 Card(
                                     modifier = Modifier
                                         .padding(bottom = 20.dp)
                                         .size(200.dp)
-                                        .clip(CircleShape)
+                                        .clip(CircleShape),
+                                    elevation = 8.dp
                                 ) {
                                     Column(
                                         modifier = Modifier.fillMaxSize(),
@@ -193,7 +253,7 @@ fun ActivityModelScreen(
                                                        .padding(
                                                            horizontal = 12.dp,
                                                            vertical = 10.dp
-                                                       ),
+                                                       ).background(MaterialTheme.colors.background),
                                                    verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                ){
@@ -251,7 +311,12 @@ fun ActivityModelScreen(
                                                               viewModel.selectedActivityPaddyFields = listOf()
                                                        }){
                                                            Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
-                                                           Text("Annuler", Modifier.clickable { selectionMode = false }.padding(start = 5.dp),fontSize = 12.sp)
+                                                           Text("Annuler",
+                                                               Modifier
+                                                                   .clickable {
+                                                                       selectionMode = false
+                                                                   }
+                                                                   .padding(start = 5.dp),fontSize = 12.sp)
                                                        }
 
                                                    }else{
@@ -259,9 +324,14 @@ fun ActivityModelScreen(
                                                            horizontalArrangement = Arrangement.SpaceBetween,
                                                            modifier = Modifier
                                                                .clickable {
-                                                                   viewModel.selectedActivityPaddyFields.sortedBy {
-                                                                       it.paddyField.name
-                                                                   }
+                                                                   viewModel.activityPaddyFields
+                                                                       .sortedBy {
+                                                                           it.paddyField.name
+                                                                       }
+                                                                       .also {
+                                                                           viewModel.activityPaddyFields =
+                                                                               it
+                                                                       }
                                                                }
                                                                .clip(RoundedCornerShape(15.dp))
                                                                .padding(
@@ -275,7 +345,9 @@ fun ActivityModelScreen(
                                                            Icon(Icons.Outlined.FilterList, "Filter")
                                                            Text(text = "Filtrer",fontSize = 12.sp)
                                                        }
-                                                       IconButton(onClick = { /*TODO*/ }) {
+                                                       IconButton(onClick = { scope.launch {
+                                                           addPaddyFieldModalBottomSheetState.show()
+                                                       } }) {
                                                            Icon(
                                                                Icons.Outlined.Add,
                                                                "Ajouter"
@@ -343,7 +415,7 @@ fun ActivityModelScreen(
                                                         .padding(
                                                             horizontal = 12.dp,
                                                             vertical = 10.dp
-                                                        ),
+                                                        ).background(MaterialTheme.colors.background),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                 ){
@@ -401,7 +473,12 @@ fun ActivityModelScreen(
                                                                 viewModel.selectedActivityWorkers = listOf()
                                                             }){
                                                             Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
-                                                            Text("Annuler", Modifier.clickable { selectionMode = false }.padding(start = 5.dp),fontSize = 12.sp)
+                                                            Text("Annuler",
+                                                                Modifier
+                                                                    .clickable {
+                                                                        selectionMode = false
+                                                                    }
+                                                                    .padding(start = 5.dp),fontSize = 12.sp)
                                                         }
 
                                                     }else{
@@ -425,7 +502,7 @@ fun ActivityModelScreen(
                                                             Icon(Icons.Outlined.FilterList, "Filter")
                                                             Text(text = "Filtrer",fontSize = 12.sp)
                                                         }
-                                                        IconButton(onClick = { /*TODO*/ }) {
+                                                        IconButton(onClick = { scope.launch{addWorkersModalBottomSheetState.show()} }) {
                                                             Icon(
                                                                 Icons.Outlined.Add,
                                                                 "Ajouter"
@@ -519,6 +596,32 @@ fun ActivityModelScreen(
                                 }
                             }
                         }
+                        AddPaddyFieldModalBottomSheet(
+                            modalBottomSheetState = addPaddyFieldModalBottomSheetState,
+                            viewModel =  remember {AddPaddyFieldViewModel(
+                                alreadyExists = viewModel.activityPaddyFields,
+                                onAddPaddyFields = { addedActivityPaddyFields ->
+                                    viewModel.activityPaddyFields += addedActivityPaddyFields
+                                    scope.launch {
+                                        addPaddyFieldModalBottomSheetState.hide()
+                                    }
+                                },
+                                activityCode = it.code)
+                            }
+                        )
+                        AddWorkersModalBottomSheet(
+                            modalBottomSheetState = addWorkersModalBottomSheetState,
+                            viewModel =  remember {AddWorkersViewModel(
+                                alreadyExists = viewModel.activityWorkers,
+                                onAddWorkersToActivity = { addedWorkers ->
+                                    viewModel.activityWorkers += addedWorkers
+                                    scope.launch {
+                                        addWorkersModalBottomSheetState.hide()
+                                    }
+                                },
+                                activityCode = it.code)
+                            }
+                        )
                     }
                 }
             }
@@ -552,10 +655,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
                 .enqueue(object : ApiCallback<Activity>() {
                     override fun onSuccess(response: Activity) {
                         activity = response
-                        loading = false
                         getActivityPaddyFields()
-                        getActivityWorkers()
-                        getActivityResources()
                     }
 
                     override fun onError(error: ApiResponseError) {
@@ -573,6 +673,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     .enqueue(object : ApiCallback<List<ActivityResource>>() {
                         override fun onSuccess(response: List<ActivityResource>) {
                             activityResources = response
+                            getActivityWorkers()
                         }
 
                         override fun onError(error: ApiResponseError) {
@@ -591,6 +692,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     .enqueue(object : ApiCallback<List<ActivityWorker>>() {
                         override fun onSuccess(response: List<ActivityWorker>) {
                             activityWorkers = response
+                            loading = false
                         }
 
                         override fun onError(error: ApiResponseError) {
@@ -601,6 +703,10 @@ class ActivityViewModel(val code: String) : ViewModel() {
         }
         
     }
+
+    fun addPaddyFieldCurrentActivity(paddyFields:List<PaddyField>){
+
+    }
     
     private fun getActivityPaddyFields(){
         activity?.let {
@@ -609,6 +715,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
                         override fun onSuccess(response: List<ActivityPaddyField>) {
                             activityPaddyFields = response
+                            getActivityResources()
                         }
 
                         override fun onError(error: ApiResponseError) {
@@ -618,6 +725,27 @@ class ActivityViewModel(val code: String) : ViewModel() {
             }
         }
         
+    }
+
+    fun markAsDone(){
+
+    }
+
+    fun markAsUnDone(){
+
+    }
+
+    fun maskAsStarted(){
+
+    }
+
+
+    fun cancelActivity(){
+
+    }
+
+    fun deleteActivity(){
+
     }
 
 }

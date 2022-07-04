@@ -29,4 +29,14 @@ interface ActivityRepository {
     fun getActivityResources(@Path("code") code: String): Call<List<ActivityResource>>
 
 
+    @POST("activity/{code}/paddyFields")
+    fun addPaddyFieldsToActivity(@Path("code") code:String, @Body paddyFieldsCode:List<String>):Call<List<ActivityPaddyField>>
+
+    @POST("activity/{code}/workers")
+    fun addWorkersToActivity(@Path("code") code:String, @Body workersCode:List<String>):Call<List<ActivityWorker>>
+
+
+
+
+
 }

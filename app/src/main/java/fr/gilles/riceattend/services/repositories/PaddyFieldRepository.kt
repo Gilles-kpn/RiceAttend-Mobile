@@ -1,5 +1,6 @@
 package fr.gilles.riceattend.services.repositories
 
+import fr.gilles.riceattend.services.entities.models.ActivityPaddyField
 import fr.gilles.riceattend.services.entities.models.PaddyFielPayLoad
 import fr.gilles.riceattend.services.entities.models.PaddyField
 import fr.gilles.riceattend.services.entities.models.Page
@@ -24,4 +25,7 @@ interface PaddyFieldRepository {
         @Path("code") code: String,
         @Body toPaddyFieldPayload: PaddyFielPayLoad
     ): Call<PaddyField>
+
+    @GET("paddyfield/{code}/activities")
+    fun getPaddyFieldActivities(@Path("code") code:String):Call<List<ActivityPaddyField>>
 }

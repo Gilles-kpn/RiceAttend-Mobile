@@ -5,13 +5,14 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -29,16 +30,18 @@ import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.app.SessionManager.Companion.context
+import fr.gilles.riceattend.services.entities.models.ActivityWorker
 import fr.gilles.riceattend.services.entities.models.Worker
-import fr.gilles.riceattend.services.entities.models.WorkerActivity
 import fr.gilles.riceattend.ui.screens.main.fragments.WorkerFormViewModel
+import fr.gilles.riceattend.ui.widget.components.ActivityTile
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
 import fr.gilles.riceattend.ui.widget.components.WorkerForm
 import kotlinx.coroutines.launch
+import java.time.Duration
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 @RequiresApi(Build.VERSION_CODES.O)
 fun WorkerModelScreen(
@@ -171,7 +174,11 @@ fun WorkerModelScreen(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                IconButton(onClick = { /*TODO*/ }) {
+                                IconButton(onClick = {
+                                    viewModel.workerActivities.sortedBy { activityWorker ->
+                                        activityWorker.price
+                                    }.also { viewModel.workerActivities = it }
+                                }) {
                                     //filter
                                     Icon(Icons.Outlined.FilterList, "Filter")
                                 }
@@ -184,28 +191,41 @@ fun WorkerModelScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
                             ) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    when (viewModel.activities.isEmpty()) {
-
-                                        true -> {
-                                            Text(
-                                                text = "Aucune activité",
-                                                modifier = Modifier.padding(top = 20.dp)
+                                LazyColumn(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(bottom = 8.dp)){
+                                    items(viewModel.workerActivities.size){ index ->
+                                        Card(modifier = Modifier
+                                            .fillMaxWidth()
+                                            .animateItemPlacement(
+                                                tween(durationMillis = 250)
                                             )
-                                        }
-                                        false -> {
-                                            viewModel.activities.forEach { activity ->
+                                            .clickable { }){
+                                            Column(modifier = Modifier.padding( bottom = 5.dp)) {
+                                                ActivityTile(activity = viewModel.workerActivities[index].activity)
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 20.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(text = "Duree : ${
+                                                        (Duration.between(
+                                                            viewModel.workerActivities[index].activity.startDate.toInstant(),
+                                                            viewModel.workerActivities[index].activity.endDate.toInstant()
+                                                        ).seconds / (3600 * 24)).toInt()} Jours", fontWeight = FontWeight.Bold, fontSize = 15.sp)
 
+                                                    Text(text= "Paye : ${viewModel.workerActivities[index].price} FCFA", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                                }
                                             }
+                                        }
+                                        Divider()
                                         }
                                     }
                                 }
-                            }
                         }
                     }
                 }
@@ -213,6 +233,7 @@ fun WorkerModelScreen(
 
         }
     }
+
 
     ModalBottomSheetLayout(
         sheetContent = {
@@ -241,7 +262,7 @@ fun WorkerModelScreen(
 class WorkerViewModel(val code: String) : ViewModel() {
     var loading by mutableStateOf(false)
     var worker by mutableStateOf<Worker?>(null)
-    var activities by mutableStateOf<List<WorkerActivity>>(listOf())
+    var workerActivities by mutableStateOf<List<ActivityWorker>>(listOf())
     var workerFormViewModel by mutableStateOf(WorkerFormViewModel())
     var updateLoading by mutableStateOf(false)
 
@@ -334,9 +355,9 @@ class WorkerViewModel(val code: String) : ViewModel() {
             loading = true
             viewModelScope.launch {
                 ApiEndpoint.workerRepository.getWorkerActivities(it.code)
-                    .enqueue(object : ApiCallback<List<WorkerActivity>>() {
-                        override fun onSuccess(response: List<WorkerActivity>) {
-                            activities = response
+                    .enqueue(object : ApiCallback<List<ActivityWorker>>() {
+                        override fun onSuccess(response: List<ActivityWorker>) {
+                            workerActivities = response
                             loading = false
                             Log.d("WorkerViewModel", "Activities: ${response}")
                         }

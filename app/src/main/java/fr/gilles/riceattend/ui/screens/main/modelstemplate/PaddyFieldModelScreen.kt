@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -25,12 +26,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
 import fr.gilles.riceattend.ui.screens.main.fragments.PaddyFieldFormViewModel
+import fr.gilles.riceattend.ui.widget.components.ActivityTile
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
 import fr.gilles.riceattend.ui.widget.components.PaddyFieldForm
@@ -103,8 +106,8 @@ fun PaddyFieldModelScreen(
                                 .clip(RoundedCornerShape(10.dp))
                         ) {
                             var expanded by remember { mutableStateOf(false) }
-                            Image(
-                                painter = rememberAsyncImagePainter(viewModel.paddyField!!.plant.image),
+                            AsyncImage(
+                                model = viewModel.paddyField!!.plant.image,
                                 contentDescription = "Profile picture",
                                 contentScale = ContentScale.FillWidth,
                                 modifier = Modifier.fillMaxSize()
@@ -230,8 +233,19 @@ fun PaddyFieldModelScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                        ) {}
+                        ) {
+                            LazyColumn(Modifier.fillMaxSize()){
+                                items(viewModel.paddyFieldActivities.size){
+                                    index ->
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ){
+                                        ActivityTile(activity = viewModel.paddyFieldActivities[index].activity)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -270,10 +284,12 @@ class PaddyFieldViewModel(val code: String) : ViewModel() {
     var plants by mutableStateOf<Page<Plant>?>(null)
     var paddyfieldFormViewModel by mutableStateOf(PaddyFieldFormViewModel())
     var updateLoading by mutableStateOf(false)
+    var paddyFieldActivities by mutableStateOf<List<ActivityPaddyField>>( listOf())
 
 
     init {
         loadPaddyField()
+        loadPlants()
     }
 
      private fun loadPaddyField() {
@@ -283,9 +299,8 @@ class PaddyFieldViewModel(val code: String) : ViewModel() {
                 .enqueue(object : ApiCallback<PaddyField>() {
                     override fun onSuccess(response: PaddyField) {
                         paddyField = response
-                        loading = false
                         initUpdateForm()
-
+                        loadPaddyFieldActivities()
                     }
 
                     override fun onError(error: ApiResponseError) {
@@ -355,5 +370,24 @@ class PaddyFieldViewModel(val code: String) : ViewModel() {
                 })
         }
 
+    }
+
+
+    private fun loadPaddyFieldActivities(){
+        paddyField?.let {
+            viewModelScope.launch {
+                ApiEndpoint.paddyFieldRepository.getPaddyFieldActivities(it.code)
+                    .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
+                        override fun onSuccess(response: List<ActivityPaddyField>) {
+                            paddyFieldActivities = response
+                            loading = false
+                        }
+
+                        override fun onError(error: ApiResponseError) {
+                            Log.d("PaddyFieldViewModel", "Error: ${error.message}")
+                        }
+                    })
+            }
+        }
     }
 }
