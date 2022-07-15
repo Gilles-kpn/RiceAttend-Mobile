@@ -59,7 +59,7 @@ fun ActivitiesFragment(
             }
         }, rightContent = {
             IconButton(onClick = { navHostController.navigate(Route.ActivityCreationRoute.path) }) {
-                Icon(Icons.Outlined.Add, "Add", tint = Color.White)
+                Icon(Icons.Outlined.Add, "Add",tint = MaterialTheme.colors.background )
             }
         })
         Box(

@@ -17,10 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -28,6 +30,7 @@ import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
+import fr.gilles.riceattend.ui.navigation.Route
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -88,56 +91,150 @@ fun ActivityModelScreen(
                                             modifier = Modifier.padding(start = 10.dp)
                                         )
                                     }
-
-                                   IconButton(onClick = {  }, modifier =Modifier.padding(end = 12.dp)) {
-                                       Icon(
-                                           Icons.Outlined.MoreVert,
-                                           "View More",
-                                           tint = MaterialTheme.colors.background
-                                       )
-                                   }
-                                    //actions
-                                    val actions = remember {
-                                        mutableListOf(
-                                            mapOf(
-                                                "title" to "Modifier",
-                                                "icon" to Icons.Outlined.Edit,
-                                                "action" to {
-
-                                                }
-                                            ),
-                                             mapOf(
-                                                 "title" to "Marquer comme debute",
-                                                 "icon" to Icons.Outlined.PlayArrow,
-                                                 "action" to {
-                                                     viewModel.maskAsStarted()
-                                                 }
-                                             ),
-                                            mapOf(
-                                                "title" to "Marquer comme fait",
-                                                "icon" to Icons.Outlined.Done,
-                                                "action" to {
-                                                    viewModel.markAsDone()
-                                                }
+                                    Box{
+                                        var expanded by remember { mutableStateOf(false)}
 
 
-                                            ),
-                                            mapOf(
-                                                "title" to "Annuler",
-                                                "icon" to Icons.Outlined.Cancel,
-                                                "action" to {
-                                                    viewModel.cancelActivity()
-                                                }
-                                            ),
-                                            mapOf(
-                                                "title" to "Supprimer",
-                                                "icon" to Icons.Outlined.Delete,
-                                                "action" to {
-                                                    viewModel.deleteActivity()
-                                                }
+                                        IconButton(onClick = { expanded = true }, modifier =Modifier.padding(end = 12.dp)) {
+                                            Icon(
+                                                Icons.Outlined.MoreVert,
+                                                "View More",
+                                                tint = MaterialTheme.colors.background
                                             )
-                                        )
+                                        }
+
+                                        DropdownMenu(
+                                            expanded = expanded ,
+                                            modifier = Modifier.width(200.dp),
+                                            onDismissRequest = { expanded = false },
+                                        ) {
+                                            if(it.status == ActivityStatus.INIT ){
+                                                DropdownMenuItem(
+                                                    onClick = {},
+                                                ) {
+                                                    Icon(Icons.Outlined.Edit, "Edit")
+                                                    Text("Modifier", modifier = Modifier.padding(start = 5.dp))
+                                                }
+                                                DropdownMenuItem(
+                                                    onClick = { viewModel.maskAsStarted(
+                                                        onSuccess = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "Activité débutée"
+                                                                )
+                                                            }
+                                                        },
+                                                        onError = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "L'activité n'a pa pu débuter\nRéessayer plus tard"
+                                                                )
+                                                            }
+                                                        }
+                                                    )},
+                                                ) {
+                                                    Icon(Icons.Outlined.PlayArrow, "Debuter")
+                                                    Text("Debuter", modifier = Modifier.padding(start = 5.dp))
+                                                }
+                                            }
+                                            if(it.status == ActivityStatus.IN_PROGRESS){
+                                                DropdownMenuItem(
+                                                    onClick = {
+                                                        viewModel.markAsDone(
+                                                            onSuccess = {
+                                                                        scope.launch{
+                                                                            snackbarHostState.showSnackbar(
+                                                                                "Activité marquée comme faite"
+                                                                            )
+                                                                        }
+                                                            },
+                                                            onError = {
+                                                                scope.launch{
+                                                                    snackbarHostState.showSnackbar(
+                                                                        "L'activité n'a pa pu etre marquée comme faite\nRéessayer plus tard"
+                                                                    )
+                                                                }
+                                                            }
+                                                        )
+                                                    },
+                                                ) {
+                                                    Icon(Icons.Outlined.Done, "Done")
+                                                    Text("Marquer comme faite", modifier = Modifier.padding(start = 5.dp))
+                                                }
+
+                                                DropdownMenuItem(
+                                                    onClick = {
+                                                        viewModel.markAsUnDone(
+                                                            onSuccess = {
+                                                                scope.launch{
+                                                                    snackbarHostState.showSnackbar(
+                                                                        "Activité marquée comme non faite"
+                                                                    )
+                                                                }
+                                                            },
+                                                            onError = {
+                                                                scope.launch{
+                                                                    snackbarHostState.showSnackbar(
+                                                                        "L'activité n'a pa pu etre marquée comme non faite\nRéessayer plus tard"
+                                                                    )
+                                                                }
+                                                            }
+                                                        )
+                                                    },
+                                                ) {
+                                                    Icon(Icons.Outlined.Undo, "Undone")
+                                                    Text("Marquer comme non fait", modifier = Modifier.padding(start = 5.dp))
+                                                }
+                                                DropdownMenuItem(
+                                                    onClick = { viewModel.markAsUnDone(
+                                                        onSuccess = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "Activité annulée"
+                                                                )
+                                                            }
+                                                        },
+                                                        onError = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "L'activité n'a pa pu etre annulée\nRéessayer plus tard"
+                                                                )
+                                                            }
+                                                        }
+                                                    )},
+                                                ) {
+                                                    Icon(Icons.Outlined.Cancel, "Cancel")
+                                                    Text("Annuler", modifier = Modifier.padding(start = 5.dp))
+                                                }
+                                            }
+                                            if(listOf(ActivityStatus.INIT, ActivityStatus.DONE).contains(it.status)){
+                                                DropdownMenuItem(
+                                                    onClick = {viewModel.deleteActivity(
+                                                        onSuccess = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "Activité supprimé"
+                                                                )
+                                                            }
+                                                            navHostController.popBackStack()
+                                                        },
+                                                        onError = {
+                                                            scope.launch{
+                                                                snackbarHostState.showSnackbar(
+                                                                    "L'activité n'a pa pu etre supprimée\nRéessayer plus tard"
+                                                                )
+                                                            }
+                                                        }
+                                                    )},
+                                                ) {
+                                                    Icon(Icons.Outlined.Delete, "Delete")
+                                                    Text("Supprimer", modifier = Modifier.padding(start = 5.dp))
+                                                }
+                                            }
+
+                                        }
                                     }
+
                                 }
 
                                 Card(
@@ -253,7 +350,8 @@ fun ActivityModelScreen(
                                                        .padding(
                                                            horizontal = 12.dp,
                                                            vertical = 10.dp
-                                                       ).background(MaterialTheme.colors.background),
+                                                       )
+                                                       .background(MaterialTheme.colors.background),
                                                    verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                ){
@@ -415,7 +513,8 @@ fun ActivityModelScreen(
                                                         .padding(
                                                             horizontal = 12.dp,
                                                             vertical = 10.dp
-                                                        ).background(MaterialTheme.colors.background),
+                                                        )
+                                                        .background(MaterialTheme.colors.background),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                 ){
@@ -704,9 +803,6 @@ class ActivityViewModel(val code: String) : ViewModel() {
         
     }
 
-    fun addPaddyFieldCurrentActivity(paddyFields:List<PaddyField>){
-
-    }
     
     private fun getActivityPaddyFields(){
         activity?.let {
@@ -727,25 +823,102 @@ class ActivityViewModel(val code: String) : ViewModel() {
         
     }
 
-    fun markAsDone(){
+    fun markAsDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.doneActivity(activity!!.code)
+                .enqueue(object: ApiCallback<Any>(){
+                    override fun onSuccess(response: Any) {
+                        activity!!.status = ActivityStatus.DONE
+                        activityPaddyFields.forEach {
+                            it.status = ActivityStatus.DONE
+                        }
+                        onSuccess()
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        onError()
+                    }
+
+                })
+        }
+    }
+
+    fun markAsUnDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.undoneActivity(activity!!.code)
+                .enqueue(object: ApiCallback<Any>(){
+                    override fun onSuccess(response: Any) {
+                        activity!!.status = ActivityStatus.UNDONE
+                        activityPaddyFields.forEach {
+                            it.status  =  ActivityStatus.UNDONE
+                        }
+                        onSuccess()
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        onError()
+                    }
+
+                })
+        }
 
     }
 
-    fun markAsUnDone(){
+    fun maskAsStarted(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.startedActivity(activity!!.code)
+                .enqueue(object: ApiCallback<Any>(){
+                    override fun onSuccess(response: Any) {
+                        activity!!.status = ActivityStatus.IN_PROGRESS
+                        activityPaddyFields.forEach {
+                            it.status = ActivityStatus.IN_PROGRESS
+                        }
+                        onSuccess()
+                    }
 
+                    override fun onError(error: ApiResponseError) {
+                        onError()
+                    }
+
+                })
+        }
     }
 
-    fun maskAsStarted(){
 
+    fun cancelActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.cancelActivity(activity!!.code)
+                .enqueue(object: ApiCallback<Any>(){
+                    override fun onSuccess(response: Any) {
+                        activity!!.status = ActivityStatus.INIT
+                        activityPaddyFields.forEach {
+                            it.status = ActivityStatus.INIT
+                        }
+                        onSuccess()
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        onError()
+                    }
+
+                })
+        }
     }
 
+    fun deleteActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.delete(activity!!.code)
+                .enqueue(object: ApiCallback<Any>(){
+                    override fun onSuccess(response: Any) {
+                        onSuccess()
+                    }
 
-    fun cancelActivity(){
+                    override fun onError(error: ApiResponseError) {
+                        onError()
+                    }
 
-    }
-
-    fun deleteActivity(){
-
+                })
+        }
     }
 
 }

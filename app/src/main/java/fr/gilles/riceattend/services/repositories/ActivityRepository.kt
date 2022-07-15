@@ -21,6 +21,9 @@ interface ActivityRepository {
     @GET("activity/{code}/workers")
     fun getActivityWorkers(@Path("code") code: String): Call<List<ActivityWorker>>
 
+    @DELETE("activity/{code}")
+    fun delete(@Path("code") code:String): Call<Any>
+
 
     @GET("activity/{code}/paddyFields")
     fun getActivityPaddyFields(@Path("code") code: String): Call<List<ActivityPaddyField>>
@@ -34,6 +37,43 @@ interface ActivityRepository {
 
     @POST("activity/{code}/workers")
     fun addWorkersToActivity(@Path("code") code:String, @Body workersCode:List<String>):Call<List<ActivityWorker>>
+
+
+    @PUT("activity/{code}/undone")
+    fun undoneActivity(@Path("code") code: String): Call<Any>
+
+
+    @PUT("activity/{code}/started")
+    fun startedActivity(@Path("code") code: String): Call<Any>
+
+    @PUT("activity/{code}/done")
+    fun doneActivity(@Path("code") code: String): Call<Any>
+
+    @PUT("activity/{code}/cancel")
+    fun cancelActivity(@Path("code") code: String): Call<Any>
+
+    @PUT("activity/{code}/paddyFields/{paddyFieldCode}/undone")
+    fun undonePaddyField(@Path("code") code: String, @Path("paddyFieldCode") paddyFieldCode: String): Call<Any>
+
+    @PUT("activity/{code}/paddyFields/{paddyFieldCode}/started")
+    fun startedPaddyField(@Path("code") code: String, @Path("paddyFieldCode") paddyFieldCode: String): Call<Any>
+
+    @PUT("activity/{code}/paddyFields/{paddyFieldCode}/done")
+    fun donePaddyField(@Path("code") code: String, @Path("paddyFieldCode") paddyFieldCode: String): Call<Any>
+
+    @PUT("activity/{code}/paddyFields/{paddyFieldCode}/cancelled")
+    fun cancelPaddyField(@Path("code") code: String, @Path("paddyFieldCode") paddyFieldCode: String): Call<Any>
+
+
+    @DELETE("activity/{code}/paddyFields/{paddyFieldCode}")
+    fun deletePaddyFieldFromActivity(@Path("code") code:String, @Path("paddyFieldCode") paddyFieldCode:String):Call<Any>
+
+
+    @DELETE("activity/{code}/workers/{workerCode}")
+    fun deleteWorkerFromActivity(@Path("code") code:String, @Path("workerCode") workerCode:String):Call<Any>
+
+    @DELETE("activity/{code}/resources/{resourceCode}")
+    fun deleteResourceFromActivity(@Path("code") code:String, @Path("resourceCode") resourceCode:String):Call<Any>
 
 
 
