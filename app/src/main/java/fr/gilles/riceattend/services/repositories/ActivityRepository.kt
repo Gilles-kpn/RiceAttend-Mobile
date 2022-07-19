@@ -8,7 +8,7 @@ interface ActivityRepository {
 
     @GET("activity")
     @JvmSuppressWildcards
-    fun getActivities(@QueryMap params: Map<String, Any>): Call<Page<Activity>>
+    fun getActivities(@QueryMap(encoded = true) params: Map<String, Any> = Params().toMap(), @Query("status") status:List<String> = listOf()): Call<Page<Activity>>
 
     @GET("activity/{code}")
     fun get(@Path("code") code: String): Call<Activity>
@@ -22,7 +22,7 @@ interface ActivityRepository {
     fun getActivityWorkers(@Path("code") code: String): Call<List<ActivityWorker>>
 
     @DELETE("activity/{code}")
-    fun delete(@Path("code") code:String): Call<Any>
+    fun delete(@Path("code") code:String): Call<Void>
 
 
     @GET("activity/{code}/paddyFields")
@@ -40,17 +40,17 @@ interface ActivityRepository {
 
 
     @PUT("activity/{code}/undone")
-    fun undoneActivity(@Path("code") code: String): Call<Any>
+    fun undoneActivity(@Path("code") code: String): Call<Void>
 
 
     @PUT("activity/{code}/started")
-    fun startedActivity(@Path("code") code: String): Call<Any>
+    fun startedActivity(@Path("code") code: String): Call<Void>
 
     @PUT("activity/{code}/done")
-    fun doneActivity(@Path("code") code: String): Call<Any>
+    fun doneActivity(@Path("code") code: String): Call<Void>
 
     @PUT("activity/{code}/cancel")
-    fun cancelActivity(@Path("code") code: String): Call<Any>
+    fun cancelActivity(@Path("code") code: String): Call<Void>
 
     @PUT("activity/{code}/paddyFields/{paddyFieldCode}/undone")
     fun undonePaddyField(@Path("code") code: String, @Path("paddyFieldCode") paddyFieldCode: String): Call<Any>

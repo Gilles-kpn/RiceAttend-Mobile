@@ -39,7 +39,7 @@ fun RegisterScreen(nav: NavController, snackbarHostState: SnackbarHostState) {
             title = "Enregistrement",
             content = {
                 Text(
-                    "Votre compte a ete enregistre avec succes, vous pouvez maintenant vous connecter",
+                    "Votre compte a été enregistré avec succes, Un email vous a été envoyé pour activer votre compte\nVeuillez vérifier votre boîte mail",
                     style = MaterialTheme.typography.subtitle1,
                     modifier = Modifier.padding(10.dp)
                 )
@@ -58,7 +58,8 @@ fun RegisterScreen(nav: NavController, snackbarHostState: SnackbarHostState) {
                     }
                 }
             },
-            show = alert
+            show = alert,
+            isSuccess = true
         )
         IncludeLottieFile(draw = R.raw.register, modifier = Modifier
             .padding(horizontal = 20.dp)

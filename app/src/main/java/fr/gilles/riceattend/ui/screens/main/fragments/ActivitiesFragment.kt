@@ -3,11 +3,12 @@ package fr.gilles.riceattend.ui.screens.main.fragments
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -79,14 +81,54 @@ fun ActivitiesFragment(
                     },
                     roundedCornerShape = RoundedCornerShape(30.dp)
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp),
+                Row(modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Outlined.FilterList, "Filtrer")
-                    Text("Filtrer", modifier = Modifier.padding(10.dp))
+                    Row(
+                        modifier = Modifier
+                            .padding(start = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.FilterList, "Filtrer")
+                        Text("Filtrer", modifier = Modifier.padding(10.dp))
+                    }
+                    Row(modifier = Modifier.horizontalScroll(rememberScrollState())
+                    ){
+                        listOf(
+                            mapOf("icon" to Icons.Outlined.TimerOff, "status" to ActivityStatus.INIT ),
+                            mapOf("icon" to Icons.Outlined.DoneAll, "status" to ActivityStatus.DONE),
+                            mapOf("icon" to Icons.Outlined.Timer, "status" to ActivityStatus.IN_PROGRESS ),
+                            mapOf("icon" to Icons.Outlined.Snooze, "status" to ActivityStatus.UNDONE ),
+                            mapOf("icon" to Icons.Outlined.Cancel, "status" to ActivityStatus.CANCELLED ),
+                        ).forEach {
+                            var alreadyInFilterParams by remember {
+                                mutableStateOf(viewModel.params.status.contains((it["status"] as ActivityStatus).value))
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 5.dp)
+                                    .clickable {
+                                        if (alreadyInFilterParams) {
+                                            viewModel.params.status -= (it["status"] as ActivityStatus).value
+                                            alreadyInFilterParams = false
+                                        } else {
+                                            viewModel.params.status += (it["status"] as ActivityStatus).value
+                                            alreadyInFilterParams = true
+                                        }
+                                    }
+                                    .clip(
+                                        CircleShape
+                                    )
+                                    .background(if (alreadyInFilterParams) MaterialTheme.colors.primary else MaterialTheme.colors.background)
+                                    .padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(it["icon"] as  ImageVector, "Filtrer", tint = if (!alreadyInFilterParams) MaterialTheme.colors.primary else MaterialTheme.colors.background)
+                                Text((it["status"] as ActivityStatus).label, modifier = Modifier.padding(10.dp), color = if (!alreadyInFilterParams) MaterialTheme.colors.primary else MaterialTheme.colors.background)
+                            }
+                        }
+
+                    }
                 }
             }
         }
@@ -100,42 +142,47 @@ fun ActivitiesFragment(
                     LoadingCard()
                 }
                 false -> {
-                    when (viewModel.activities) {
-                        null -> {
-                            LoadingCard()
-                        }
-                        else -> {
-                            viewModel.activities?.let {
-                                if (it.empty == true) {
-                                    Column(
-                                        Modifier.fillMaxSize(),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text("Aucune activité")
-                                    }
-                                } else {
-                                    Column(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .verticalScroll(rememberScrollState()),
-                                        verticalArrangement = Arrangement.Top,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        it.content.forEach { activity ->
-                                            ActivityTile(activity = activity, onClick = {
-                                                navHostController.navigate(
-                                                    Route.ActivityRoute.path.replace(
-                                                        "{code}",
-                                                        activity.code
-                                                    )
-                                                ){
-                                                }
-                                            })
+                    viewModel.activities.let {
+                        if (it.isEmpty()) {
+                            Column(
+                                Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Aucune activité")
+                            }
+                        } else {
+                            val listState = rememberLazyListState()
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                state = listState,
+                            ) {
+                                items(viewModel.activities.size){index->
+                                    ActivityTile(activity = viewModel.activities[index], onClick = {
+                                        navHostController.navigate(
+                                            Route.ActivityRoute.path.replace(
+                                                "{code}",
+                                                viewModel.activities[index].code
+                                            )
+                                        ){
                                         }
+                                    })
+                                }
+
+                                if(viewModel.hasMore)
+                                item {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().clickable { viewModel.viewMore() }.padding(vertical = 7.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ){
+                                        if(!viewModel.loadingMore)
+                                            Text(text = "Cliquer ici pour voir plus")
+                                        else CircularProgressIndicator()
                                     }
                                 }
                             }
+
                         }
                     }
                 }
@@ -146,9 +193,11 @@ fun ActivitiesFragment(
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ActivitiesViewModel : ViewModel() {
-    var activities by mutableStateOf<Page<Activity>?>(null)
+    var activities by mutableStateOf<List<Activity>>(listOf())
+    var hasMore by mutableStateOf(false)
     var loading by mutableStateOf(false)
-    val params by mutableStateOf<Params>(Params())
+    var loadingMore by mutableStateOf(false)
+    val params by mutableStateOf(ActivityParam())
     val searchState by mutableStateOf(TextFieldState(validator = {
         it.isNotBlank() && it.isNotEmpty()
     }, errorMessage = {
@@ -162,21 +211,38 @@ class ActivitiesViewModel : ViewModel() {
 
     private fun loadActivities() {
         loading = true
+        load{
+            loading = false
+        }
+    }
+
+
+    private fun load(onFinish:()->Unit = {}){
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.getActivities(params.toMap())
+            ApiEndpoint.activityRepository.getActivities(params.toMap(), params.status)
                 .enqueue(object : ApiCallback<Page<Activity>>() {
                     override fun onSuccess(response: Page<Activity>) {
-                        activities = response
-                        loading = false
+                        hasMore = !response.last!!
+                        activities = activities.plus(response.content)
+                        onFinish()
                     }
 
                     override fun onError(error: ApiResponseError) {
-                        loading = false
+                       onFinish()
                         Log.d("ActivitiesViewModel", error.message)
                     }
 
                 })
         }
+    }
+
+    fun viewMore(){
+        loadingMore = true
+        params.pageNumber +=1
+        load {
+            loadingMore = false
+        }
+
     }
 
 }

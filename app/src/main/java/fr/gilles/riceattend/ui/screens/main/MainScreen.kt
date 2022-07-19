@@ -121,9 +121,8 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                 )
             }
             pages.forEach {
-                val backgroundColor: Color =
-                    if (it["route"] == nav.currentDestination?.route) MaterialTheme.colors.primary else Color.Transparent
-                val frontColor: Color = Color.White
+                val backgroundColor: Color = if (it["route"] == nav.currentDestination?.route) MaterialTheme.colors.primary else Color.Transparent
+                val frontColor: Color = if (it["route"] == nav.currentDestination?.route) MaterialTheme.colors.background else Color.White
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

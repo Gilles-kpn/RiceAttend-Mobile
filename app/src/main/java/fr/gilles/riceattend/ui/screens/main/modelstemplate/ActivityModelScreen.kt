@@ -1,9 +1,13 @@
 package fr.gilles.riceattend.ui.screens.main.modelstemplate
 
+import android.content.Intent
 import android.os.Build
+import android.provider.CalendarContract
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,23 +21,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
+import fr.gilles.riceattend.services.app.SessionManager.Companion.context
 import fr.gilles.riceattend.services.entities.models.*
-import fr.gilles.riceattend.ui.navigation.Route
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.time.Duration
+import java.util.*
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -52,6 +59,27 @@ fun ActivityModelScreen(
                 null -> {}
                 else -> {
                     viewModel.activity?.let {
+                        var dialogText by remember{ mutableStateOf<String?>(null) };
+                        var dialogIsSuccess by remember { mutableStateOf<Boolean>(false) }
+
+                        if (dialogText != null) {
+                            OpenDialog(
+                                content = {
+                                    dialogText?.let{
+                                        Text(text = it)
+                                    }
+                                },
+                                title = "Attention",
+                                onDismiss = {
+                                    dialogText = null
+                                },
+                                onConfirm = {
+                                    dialogText = null
+                                },
+                                show = dialogText != null,
+                                isSuccess = dialogIsSuccess
+                            )
+                        }
                         val addPaddyFieldModalBottomSheetState = rememberModalBottomSheetState(
                             initialValue = ModalBottomSheetValue.Hidden
                         )
@@ -108,33 +136,54 @@ fun ActivityModelScreen(
                                             modifier = Modifier.width(200.dp),
                                             onDismissRequest = { expanded = false },
                                         ) {
-                                            if(it.status == ActivityStatus.INIT ){
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    viewModel.plainlyActivityOnAgenda(
+                                                        onSuccess = {
+                                                            dialogText = "Activité ajoutée à l'agenda"
+                                                            dialogIsSuccess = true
+                                                        },
+                                                        onError = {
+                                                            dialogText = "Erreur lors de l'ajout à l'agenda"
+                                                            dialogIsSuccess = false
+                                                        }
+                                                    )
+                                                },
+                                            ) {
+                                                Icon(Icons.Outlined.CalendarToday, "planification")
+                                                Text(
+                                                    "Planifier l'activité",
+                                                    modifier = Modifier.padding(start = 5.dp)
+                                                )
+                                            }
+                                            if (it.status == ActivityStatus.INIT) {
                                                 DropdownMenuItem(
                                                     onClick = {},
                                                 ) {
                                                     Icon(Icons.Outlined.Edit, "Edit")
-                                                    Text("Modifier", modifier = Modifier.padding(start = 5.dp))
+                                                    Text(
+                                                        "Modifier",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
                                                 DropdownMenuItem(
-                                                    onClick = { viewModel.maskAsStarted(
-                                                        onSuccess = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "Activité débutée"
-                                                                )
+                                                    onClick = {
+                                                        viewModel.markAsStarted(
+                                                            onSuccess = {
+                                                                dialogText = "Activité démarrée"
+                                                                dialogIsSuccess = true
+                                                            },
+                                                            onError = {
+                                                                dialogText = "L'activité n'a pas pu être démarrée"
+                                                                dialogIsSuccess = false
                                                             }
-                                                        },
-                                                        onError = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "L'activité n'a pa pu débuter\nRéessayer plus tard"
-                                                                )
-                                                            }
-                                                        }
-                                                    )},
+                                                        )},
                                                 ) {
-                                                    Icon(Icons.Outlined.PlayArrow, "Debuter")
-                                                    Text("Debuter", modifier = Modifier.padding(start = 5.dp))
+                                                    Icon(Icons.Outlined.PlayArrow, "Start")
+                                                    Text(
+                                                        "Débuter",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
                                             }
                                             if(it.status == ActivityStatus.IN_PROGRESS){
@@ -142,18 +191,12 @@ fun ActivityModelScreen(
                                                     onClick = {
                                                         viewModel.markAsDone(
                                                             onSuccess = {
-                                                                        scope.launch{
-                                                                            snackbarHostState.showSnackbar(
-                                                                                "Activité marquée comme faite"
-                                                                            )
-                                                                        }
+                                                                dialogText = "Activité marquée comme terminée"
+                                                                dialogIsSuccess = true
                                                             },
                                                             onError = {
-                                                                scope.launch{
-                                                                    snackbarHostState.showSnackbar(
-                                                                        "L'activité n'a pa pu etre marquée comme faite\nRéessayer plus tard"
-                                                                    )
-                                                                }
+                                                                dialogText = "L'activité n'a pas pu être terminée"
+                                                                dialogIsSuccess = false
                                                             }
                                                         )
                                                     },
@@ -166,40 +209,35 @@ fun ActivityModelScreen(
                                                     onClick = {
                                                         viewModel.markAsUnDone(
                                                             onSuccess = {
-                                                                scope.launch{
-                                                                    snackbarHostState.showSnackbar(
-                                                                        "Activité marquée comme non faite"
-                                                                    )
-                                                                }
+                                                                dialogText =
+                                                                    "Activité marquée comme non terminée"
+                                                                dialogIsSuccess = true
                                                             },
                                                             onError = {
-                                                                scope.launch{
-                                                                    snackbarHostState.showSnackbar(
-                                                                        "L'activité n'a pa pu etre marquée comme non faite\nRéessayer plus tard"
-                                                                    )
-                                                                }
+                                                                dialogText =
+                                                                    "L'activité n'a pas pu être marquée comme non terminée"
+                                                                dialogIsSuccess = false
+
                                                             }
                                                         )
                                                     },
                                                 ) {
                                                     Icon(Icons.Outlined.Undo, "Undone")
-                                                    Text("Marquer comme non fait", modifier = Modifier.padding(start = 5.dp))
+                                                    Text(
+                                                        "Marquer comme non faite",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
                                                 DropdownMenuItem(
                                                     onClick = { viewModel.markAsUnDone(
                                                         onSuccess = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "Activité annulée"
-                                                                )
-                                                            }
+                                                            dialogText = "Activité annulée"
+                                                            dialogIsSuccess = true
                                                         },
                                                         onError = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "L'activité n'a pa pu etre annulée\nRéessayer plus tard"
-                                                                )
-                                                            }
+                                                            dialogText =
+                                                                "L'activité n'a pas pu être annulée"
+                                                            dialogIsSuccess = false
                                                         }
                                                     )},
                                                 ) {
@@ -342,142 +380,142 @@ fun ActivityModelScreen(
                                 when (selectedIndex) {
                                     0 -> {
                                         var selectionMode by remember{ mutableStateOf(false) }
-                                       LazyColumn(Modifier.fillMaxWidth()){
-                                           stickyHeader {
-                                               Row(
-                                                   Modifier
-                                                       .fillMaxWidth()
-                                                       .padding(
-                                                           horizontal = 12.dp,
-                                                           vertical = 10.dp
-                                                       )
-                                                       .background(MaterialTheme.colors.background),
-                                                   verticalAlignment = Alignment.CenterVertically,
+                                        LazyColumn(Modifier.fillMaxWidth()){
+                                            stickyHeader {
+                                                Row(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = 12.dp,
+                                                            vertical = 10.dp
+                                                        )
+                                                        .background(MaterialTheme.colors.background),
+                                                    verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                               ){
-                                                   if(selectionMode){
+                                                ){
+                                                    if(selectionMode){
 
-                                                       Row(verticalAlignment = Alignment.CenterVertically,
-                                                           modifier = Modifier.clickable{
-                                                               if(viewModel.selectedActivityPaddyFields.isEmpty()){
-                                                                   viewModel.selectedActivityPaddyFields = viewModel.activityPaddyFields
-                                                               }else {
-                                                                   viewModel.selectedActivityPaddyFields = listOf()
-                                                               }
-                                                           }
-                                                       ){
-                                                           if (viewModel.selectedActivityPaddyFields.isEmpty()){
-                                                               Icon(
-                                                                   Icons.Outlined.Check,
-                                                                   "Tout selectionner",
-                                                                   modifier =Modifier.size(18.dp)
-                                                               )
-                                                               Text(
-                                                                   text = "Tout selectionner",
-                                                                   modifier = Modifier.padding(start = 5.dp),
-                                                                   fontSize = 12.sp
-                                                               )
-                                                           }else{
-                                                               Icon(
-                                                                   Icons.Outlined.CheckBox,
-                                                                   "Tout selectionner",
-                                                                   modifier =Modifier.size(18.dp)
-                                                               )
-                                                               Text(
-                                                                   text = "Tout deselectionner",
-                                                                   modifier = Modifier.padding(start = 5.dp),
-                                                                   fontSize = 12.sp
-                                                               )
-                                                           }
+                                                        Row(verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.clickable{
+                                                                if(viewModel.selectedActivityPaddyFields.isEmpty()){
+                                                                    viewModel.selectedActivityPaddyFields = viewModel.activityPaddyFields
+                                                                }else {
+                                                                    viewModel.selectedActivityPaddyFields = listOf()
+                                                                }
+                                                            }
+                                                        ){
+                                                            if (viewModel.selectedActivityPaddyFields.isEmpty()){
+                                                                Icon(
+                                                                    Icons.Outlined.Check,
+                                                                    "Tout selectionner",
+                                                                    modifier =Modifier.size(18.dp)
+                                                                )
+                                                                Text(
+                                                                    text = "Tout selectionner",
+                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    fontSize = 12.sp
+                                                                )
+                                                            }else{
+                                                                Icon(
+                                                                    Icons.Outlined.CheckBox,
+                                                                    "Tout selectionner",
+                                                                    modifier =Modifier.size(18.dp)
+                                                                )
+                                                                Text(
+                                                                    text = "Tout deselectionner",
+                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    fontSize = 12.sp
+                                                                )
+                                                            }
 
-                                                       }
-                                                       Row(verticalAlignment = Alignment.CenterVertically){
-                                                           Icon(
-                                                               Icons.Outlined.RemoveFromQueue,
-                                                               "remove",
-                                                               modifier =Modifier.size(18.dp))
-                                                           Text(
-                                                               text = "Retirer la selection",
-                                                               modifier = Modifier.padding(start = 5.dp),
-                                                               fontSize = 12.sp
-                                                           )
-                                                       }
+                                                        }
+                                                        Row(verticalAlignment = Alignment.CenterVertically){
+                                                            Icon(
+                                                                Icons.Outlined.RemoveFromQueue,
+                                                                "remove",
+                                                                modifier =Modifier.size(18.dp))
+                                                            Text(
+                                                                text = "Retirer la selection",
+                                                                modifier = Modifier.padding(start = 5.dp),
+                                                                fontSize = 12.sp
+                                                            )
+                                                        }
 
-                                                       Row(verticalAlignment = Alignment.CenterVertically,
-                                                           modifier = Modifier.clickable{
-                                                               selectionMode = false
-                                                              viewModel.selectedActivityPaddyFields = listOf()
-                                                       }){
-                                                           Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
-                                                           Text("Annuler",
-                                                               Modifier
-                                                                   .clickable {
-                                                                       selectionMode = false
-                                                                   }
-                                                                   .padding(start = 5.dp),fontSize = 12.sp)
-                                                       }
+                                                        Row(verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.clickable{
+                                                                selectionMode = false
+                                                                viewModel.selectedActivityPaddyFields = listOf()
+                                                            }){
+                                                            Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
+                                                            Text("Annuler",
+                                                                Modifier
+                                                                    .clickable {
+                                                                        selectionMode = false
+                                                                    }
+                                                                    .padding(start = 5.dp),fontSize = 12.sp)
+                                                        }
 
-                                                   }else{
-                                                       Row( verticalAlignment = Alignment.CenterVertically,
-                                                           horizontalArrangement = Arrangement.SpaceBetween,
-                                                           modifier = Modifier
-                                                               .clickable {
-                                                                   viewModel.activityPaddyFields
-                                                                       .sortedBy {
-                                                                           it.paddyField.name
-                                                                       }
-                                                                       .also {
-                                                                           viewModel.activityPaddyFields =
-                                                                               it
-                                                                       }
-                                                               }
-                                                               .clip(RoundedCornerShape(15.dp))
-                                                               .padding(
-                                                                   start = 15.dp,
-                                                                   end = 15.dp,
-                                                                   top = 5.dp,
-                                                                   bottom = 5.dp
-                                                               )
+                                                    }else{
+                                                        Row( verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            modifier = Modifier
+                                                                .clickable {
+                                                                    viewModel.activityPaddyFields
+                                                                        .sortedBy {
+                                                                            it.paddyField.name
+                                                                        }
+                                                                        .also {
+                                                                            viewModel.activityPaddyFields =
+                                                                                it
+                                                                        }
+                                                                }
+                                                                .clip(RoundedCornerShape(15.dp))
+                                                                .padding(
+                                                                    start = 15.dp,
+                                                                    end = 15.dp,
+                                                                    top = 5.dp,
+                                                                    bottom = 5.dp
+                                                                )
 
-                                                       ){
-                                                           Icon(Icons.Outlined.FilterList, "Filter")
-                                                           Text(text = "Filtrer",fontSize = 12.sp)
-                                                       }
-                                                       IconButton(onClick = { scope.launch {
-                                                           addPaddyFieldModalBottomSheetState.show()
-                                                       } }) {
-                                                           Icon(
-                                                               Icons.Outlined.Add,
-                                                               "Ajouter"
-                                                           )
-                                                       }
-                                                   }
+                                                        ){
+                                                            Icon(Icons.Outlined.FilterList, "Filter")
+                                                            Text(text = "Filtrer",fontSize = 12.sp)
+                                                        }
+                                                        IconButton(onClick = { scope.launch {
+                                                            addPaddyFieldModalBottomSheetState.show()
+                                                        } }) {
+                                                            Icon(
+                                                                Icons.Outlined.Add,
+                                                                "Ajouter"
+                                                            )
+                                                        }
+                                                    }
 
-                                               }
-                                           }
+                                                }
+                                            }
                                             items(viewModel.activityPaddyFields.size){index ->
                                                 Card(Modifier.fillMaxWidth()
                                                 ) {
                                                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically){
                                                         if(selectionMode)
-                                                        Checkbox(
-                                                            checked = viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index]) ,
-                                                            onCheckedChange = {
-                                                                if(it){
-                                                                    if(!viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
-                                                                        viewModel.selectedActivityPaddyFields += viewModel.activityPaddyFields[index]
+                                                            Checkbox(
+                                                                checked = viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index]) ,
+                                                                onCheckedChange = {
+                                                                    if(it){
+                                                                        if(!viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
+                                                                            viewModel.selectedActivityPaddyFields += viewModel.activityPaddyFields[index]
+                                                                        }
+                                                                    }else{
+                                                                        if(viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
+                                                                            viewModel.selectedActivityPaddyFields -= viewModel.activityPaddyFields[index]
+                                                                        }
                                                                     }
-                                                                }else{
-                                                                    if(viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
-                                                                        viewModel.selectedActivityPaddyFields -= viewModel.activityPaddyFields[index]
-                                                                    }
-                                                                }
-                                                            })
+                                                                })
 
                                                         PaddyFieldTile(
                                                             paddyField = viewModel.activityPaddyFields[index].paddyField,
                                                             onLongClick = {
-                                                               selectionMode = !selectionMode
+                                                                selectionMode = !selectionMode
                                                                 viewModel.selectedActivityPaddyFields = listOf()
                                                             },
                                                             badgeContent = {
@@ -498,7 +536,7 @@ fun ActivityModelScreen(
 
                                                 }
                                             }
-                                       }
+                                        }
                                     }
                                     1 -> {
                                         var selectionMode by remember{ mutableStateOf(false) }
@@ -613,7 +651,7 @@ fun ActivityModelScreen(
                                             }
                                             items(viewModel.activityWorkers.size){index ->
                                                 Card(Modifier
-                                                        .fillMaxWidth()) {
+                                                    .fillMaxWidth()) {
                                                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                                         if (selectionMode)
                                                             Checkbox(
@@ -649,7 +687,7 @@ fun ActivityModelScreen(
                                                 }
                                             }
                                         }
-                                        
+
                                     }
                                     2 ->{
                                         LazyColumn(
@@ -826,19 +864,17 @@ class ActivityViewModel(val code: String) : ViewModel() {
     fun markAsDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
         viewModelScope.launch {
             ApiEndpoint.activityRepository.doneActivity(activity!!.code)
-                .enqueue(object: ApiCallback<Any>(){
-                    override fun onSuccess(response: Any) {
-                        activity!!.status = ActivityStatus.DONE
-                        activityPaddyFields.forEach {
-                            it.status = ActivityStatus.DONE
-                        }
-                        onSuccess()
+                .enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful)
+                            onSuccess()
+                        else
+                            onError()
                     }
 
-                    override fun onError(error: ApiResponseError) {
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
                         onError()
                     }
-
                 })
         }
     }
@@ -846,40 +882,42 @@ class ActivityViewModel(val code: String) : ViewModel() {
     fun markAsUnDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
         viewModelScope.launch {
             ApiEndpoint.activityRepository.undoneActivity(activity!!.code)
-                .enqueue(object: ApiCallback<Any>(){
-                    override fun onSuccess(response: Any) {
-                        activity!!.status = ActivityStatus.UNDONE
-                        activityPaddyFields.forEach {
-                            it.status  =  ActivityStatus.UNDONE
-                        }
-                        onSuccess()
+                .enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            activity!!.status = ActivityStatus.UNDONE
+                            activityPaddyFields.forEach {
+                                it.status = ActivityStatus.UNDONE
+                            }
+                            onSuccess()
+                        } else onError()
                     }
 
-                    override fun onError(error: ApiResponseError) {
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
                         onError()
                     }
-
                 })
         }
 
     }
 
-    fun maskAsStarted(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun markAsStarted(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
         viewModelScope.launch {
             ApiEndpoint.activityRepository.startedActivity(activity!!.code)
-                .enqueue(object: ApiCallback<Any>(){
-                    override fun onSuccess(response: Any) {
-                        activity!!.status = ActivityStatus.IN_PROGRESS
-                        activityPaddyFields.forEach {
-                            it.status = ActivityStatus.IN_PROGRESS
-                        }
-                        onSuccess()
+                .enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            activity!!.status = ActivityStatus.IN_PROGRESS
+                            activityPaddyFields.forEach {
+                                it.status = ActivityStatus.IN_PROGRESS
+                            }
+                            onSuccess()
+                        } else onError()
                     }
 
-                    override fun onError(error: ApiResponseError) {
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
                         onError()
                     }
-
                 })
         }
     }
@@ -888,19 +926,21 @@ class ActivityViewModel(val code: String) : ViewModel() {
     fun cancelActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
         viewModelScope.launch {
             ApiEndpoint.activityRepository.cancelActivity(activity!!.code)
-                .enqueue(object: ApiCallback<Any>(){
-                    override fun onSuccess(response: Any) {
-                        activity!!.status = ActivityStatus.INIT
-                        activityPaddyFields.forEach {
-                            it.status = ActivityStatus.INIT
-                        }
-                        onSuccess()
+                .enqueue(object : Callback<Void> {
+
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            activity!!.status = ActivityStatus.INIT
+                            activityPaddyFields.forEach {
+                                it.status = ActivityStatus.INIT
+                            }
+                            onSuccess()
+                        } else onError()
                     }
 
-                    override fun onError(error: ApiResponseError) {
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
                         onError()
                     }
-
                 })
         }
     }
@@ -908,18 +948,48 @@ class ActivityViewModel(val code: String) : ViewModel() {
     fun deleteActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
         viewModelScope.launch {
             ApiEndpoint.activityRepository.delete(activity!!.code)
-                .enqueue(object: ApiCallback<Any>(){
-                    override fun onSuccess(response: Any) {
-                        onSuccess()
+                .enqueue(object: Callback<Void>{
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            onSuccess()
+                        } else onError()
                     }
 
-                    override fun onError(error: ApiResponseError) {
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
                         onError()
                     }
-
                 })
         }
     }
+
+    fun plainlyActivityOnAgenda(onSuccess: () -> Unit = {}, onError: () -> Unit) {
+        // make a rappel for the activity on the agenda of phone
+        val intent = Intent(Intent.ACTION_INSERT)
+        intent.type = "vnd.android.cursor.item/event"
+        intent.putExtra(CalendarContract.Events.TITLE, activity!!.name)
+        intent.putExtra(CalendarContract.Events.DESCRIPTION, activity!!.description)
+        //use system timezone
+        intent.putExtra(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+        intent.putExtra(CalendarContract.Events.ALL_DAY, true)
+        intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, activity!!.startDate.time)
+        intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, activity!!.endDate.time)
+        intent.putExtra(
+            CalendarContract.Events.AVAILABILITY,
+            CalendarContract.Events.AVAILABILITY_BUSY
+        )
+        intent.putExtra(CalendarContract.Events.RRULE, "FREQ=WEEKLY;COUNT=10")
+        intent.putExtra(CalendarContract.Events.CALENDAR_ID, 1)
+        intent.putExtra(CalendarContract.Events.EVENT_COLOR, Color.Green.toArgb())
+        intent.putExtra(CalendarContract.Events.EVENT_COLOR_KEY, "green")
+
+        // launch intent to create event
+        activity?.let {
+            context.get()?.startActivity(intent).run {
+                onSuccess()
+            }
+        }
+    }
+
 
 }
 

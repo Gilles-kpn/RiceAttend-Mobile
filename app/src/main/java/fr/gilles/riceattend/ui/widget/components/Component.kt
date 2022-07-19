@@ -12,12 +12,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ShortText
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,13 +55,33 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
         .fillMaxWidth()
         .padding(vertical = 3.dp)
         .clip(RoundedCornerShape(5.dp))
-        .clickable { onClick() }
+        .clickable { onClick() },
+        elevation = 8.dp
     ) {
+
         Row(
             verticalAlignment = Alignment.CenterVertically, modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
+
+            when(activity.status){
+                ActivityStatus.IN_PROGRESS ->{
+                    Icon(Icons.Outlined.Timer  , "In progress", Modifier.padding(20.dp),MaterialTheme.colors.primary)
+                }
+                ActivityStatus.DONE ->{
+                    Icon(Icons.Outlined.DoneAll, "Done",Modifier.padding(20.dp), Color.Green)
+                }
+                ActivityStatus.CANCELLED ->{
+                    Icon(Icons.Outlined.Cancel, "Cancelled",Modifier.padding(20.dp),Color.Red)
+                }
+                ActivityStatus.UNDONE ->{
+                    Icon(Icons.Default.Snooze, "Undone", Modifier.padding(20.dp),Color.Cyan)
+                }
+                else -> {
+                    Icon(Icons.Outlined.TimerOff, "Unknown",Modifier.padding(20.dp))
+                }
+            }
             Column(
                 modifier = Modifier
                     .padding(vertical = 3.dp, horizontal = 10.dp)
@@ -68,26 +89,20 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
                     .fillMaxHeight()
                     .weight(7f)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(activity.name, style = MaterialTheme.typography.h1)
-                    Text(
-                        text = activity.status.value, modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colors.primary)
-                            .padding(all = 5.dp), color = MaterialTheme.colors.background
-                    )
-                }
+                Text(activity.name, style = MaterialTheme.typography.h1)
+                Text(activity.status.label, style = MaterialTheme.typography.body1, modifier = Modifier.padding(vertical = 5.dp))
                 Text(
                     text = "${formatDateToHumanReadable(activity.startDate)} - ${
                         formatDateToHumanReadable(
                             activity.endDate
                         )
                     }", modifier = Modifier
+                )
+                Text(
+                    text = "Cree le ${formatDateToHumanReadable(activity.createdAt)}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
                 )
             }
         }
@@ -171,7 +186,7 @@ fun WorkerTile(worker: Worker, onClick: () -> Unit = {}, onLongClick: () -> Unit
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .combinedClickable(onClick = onClick , onLongClick = onLongClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(start = 10.dp)
     ) {
         Icon(Icons.Outlined.Person, "worker icon")
@@ -208,15 +223,14 @@ fun PaddyFieldTile(paddyField: PaddyField,
                    onClick: () -> Unit = {},
                    onLongClick: () -> Unit = {},
                    badgeContent: @Composable () -> Unit = {}) {
-    Log.d("paddyfield", "paddyfield  ==> $paddyField")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
-            .combinedClickable (
+            .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-                )
+            )
     ) {
         Icon(
             Icons.Outlined.Landscape,
@@ -251,10 +265,10 @@ fun OpenDialog(
     content: @Composable() () -> Unit = {},
     title: String = "Alert", onDismiss: () -> Unit = {},
     onConfirm: () -> Unit = {},
-    show: Boolean = false
+    show: Boolean = false,
+    isSuccess: Boolean = false,
 ) {
     if (show)
-
         Dialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(
@@ -271,19 +285,24 @@ fun OpenDialog(
                     Column(
                         modifier = Modifier.padding(10.dp)
                     ) {
-                        Text(
-                            text = title,
-                            modifier = Modifier.padding(bottom = 10.dp),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        content()
+                        Row(modifier= Modifier.fillMaxWidth().padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if(isSuccess)
+                                Icon(Icons.Outlined.Check, "success icon", tint = MaterialTheme.colors.primary)
+                            else
+                                Icon(Icons.Outlined.Error, "error icon", tint = MaterialTheme.colors.error)
+                            Text(
+                                text = title,
+                                modifier =Modifier.padding(horizontal = 10.dp),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Box(modifier = Modifier.fillMaxWidth().padding(15.dp)) {
+                            content()
+                        }
                         Button(
                             onClick = onConfirm,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                                .padding(top = 10.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                             shape = RoundedCornerShape(30.dp),
                         ) {
                             Text(text = "OK")

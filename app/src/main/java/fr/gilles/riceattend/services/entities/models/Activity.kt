@@ -47,12 +47,12 @@ data class ActivityPayload(
 
     )
 
-enum class ActivityStatus(val value: String) {
-    INIT("INIT"),
-    IN_PROGRESS("IN_PROGRESS"),
-    CANCELLED("CANCELLED"),
-    UNDONE("UNDONE"),
-    DONE("DONE")
+enum class ActivityStatus(val value: String, val label: String) {
+    INIT("INIT", "En attente"),
+    IN_PROGRESS("IN_PROGRESS", "En cours"),
+    CANCELLED("CANCELLED", "Annulé"),
+    UNDONE("UNDONE", "Non effectué"),
+    DONE("DONE", "Effectué"),
 }
 
 data class ActivityResourcePayload(
