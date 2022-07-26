@@ -71,17 +71,28 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                 Icon(Icons.Outlined.Person, "User icons")
             }
             SessionManager.session.user?.let {
-                Text(
-                    text = it.name,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 20.dp)
-                )
-                Text(
-                    text = it.email,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(bottom = 10.dp, start = 20.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ){
+                    Column() {
+                        Text(
+                            text = it.name,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 20.dp)
+                        )
+                        Text(
+                            text = it.email,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(bottom = 10.dp, start = 20.dp)
+                        )
+                    }
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(Icons.Outlined.Edit, "Edit")
+                    }
+                }
             } ?: Column(Modifier.padding(start = 20.dp)) {
                 Text(text = "KPANOU Gilles", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(
@@ -130,8 +141,10 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                         .height(50.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .clickable {
-                            nav.navigate(it["route"] as String)
+
                             scope.launch { scaffoldState.drawerState.close() }
+                            nav.navigate(it["route"] as String)
+
                         }
                         .background(backgroundColor),
                     verticalAlignment = Alignment.CenterVertically
@@ -178,7 +191,12 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                     .padding(6.dp)
                     .height(50.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .clickable { },
+                    .clickable {
+                        scope.launch { scaffoldState.drawerState.close() }
+                        nav.navigate(
+                            Route.SettingRoute.path
+                        )
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(

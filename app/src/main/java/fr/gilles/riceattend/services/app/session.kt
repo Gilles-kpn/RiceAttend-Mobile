@@ -1,24 +1,33 @@
 package fr.gilles.riceattend.services.app
 
 import android.content.Context
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import fr.gilles.riceattend.services.entities.models.User
+import fr.gilles.riceattend.ui.screens.main.fragments.Language
 import java.lang.ref.WeakReference
+import java.util.prefs.Preferences
 
 
 data class Session(
     @SerializedName("authorization") var authorization: String = "",
-    @SerializedName("user") var user: User? = null
+    @SerializedName("user") var user: User? = null,
+    @SerializedName("preferences") var preferences: Map<String, Any> =
+        mapOf(
+            "theme" to "light",
+            "language" to Language.FRENCH
+        )
 )
 
 
 class SessionManager {
     companion object {
         var session: Session by mutableStateOf(Session())
+
         var context: WeakReference<Context> = WeakReference(null)
 
         fun load() {
@@ -27,6 +36,7 @@ class SessionManager {
                     .getString("session", null)?.let { serializerSession ->
                         this.session = Gson().fromJson(serializerSession, Session::class.java)
                     }
+
             }
         }
 

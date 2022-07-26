@@ -198,6 +198,12 @@ fun NavigationContent(
                 }
 
             }
+
+            composable(Route.SettingRoute.path) {
+                SettingsFragment(
+                    onMenuClick = { scope.launch { scaffoldState.drawerState.open() } }
+                )
+            }
         }
     }
 }

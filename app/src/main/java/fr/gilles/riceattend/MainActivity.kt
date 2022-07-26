@@ -1,5 +1,6 @@
 package fr.gilles.riceattend
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -20,11 +21,12 @@ import fr.gilles.riceattend.services.app.SessionManager
 import fr.gilles.riceattend.ui.navigation.NavigationContent
 import fr.gilles.riceattend.ui.theme.RiceAttendTheme
 import java.lang.ref.WeakReference
-
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SessionManager.context = WeakReference(this@MainActivity)
+        SessionManager.load()
         setContent {
             actionBar?.hide()
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_MODE_CHANGED);
@@ -34,8 +36,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    SessionManager.context = WeakReference(this@MainActivity)
-                    SessionManager.load()
+
                     val snackbarHostState = remember { SnackbarHostState() }
                     NavigationContent(
                         navHostController = rememberNavController(),
