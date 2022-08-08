@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,7 +52,7 @@ fun ActivityModelScreen(
     navHostController: NavHostController,
     snackbarHostState: SnackbarHostState,
     viewModel: ActivityViewModel
-){
+) {
     val scope = rememberCoroutineScope()
     when (viewModel.loading) {
         true -> LoadingCard()
@@ -59,13 +61,13 @@ fun ActivityModelScreen(
                 null -> {}
                 else -> {
                     viewModel.activity?.let {
-                        var dialogText by remember{ mutableStateOf<String?>(null) };
+                        var dialogText by remember { mutableStateOf<String?>(null) };
                         var dialogIsSuccess by remember { mutableStateOf<Boolean>(false) }
 
                         if (dialogText != null) {
                             OpenDialog(
                                 content = {
-                                    dialogText?.let{
+                                    dialogText?.let {
                                         Text(text = it)
                                     }
                                 },
@@ -95,10 +97,10 @@ fun ActivityModelScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Row(
-                                    modifier =Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
-                                ){
+                                ) {
                                     Row(
                                         modifier = Modifier
                                             .padding(12.dp),
@@ -119,11 +121,14 @@ fun ActivityModelScreen(
                                             modifier = Modifier.padding(start = 10.dp)
                                         )
                                     }
-                                    Box{
-                                        var expanded by remember { mutableStateOf(false)}
+                                    Box {
+                                        var expanded by remember { mutableStateOf(false) }
 
 
-                                        IconButton(onClick = { expanded = true }, modifier =Modifier.padding(end = 12.dp)) {
+                                        IconButton(
+                                            onClick = { expanded = true },
+                                            modifier = Modifier.padding(end = 12.dp)
+                                        ) {
                                             Icon(
                                                 Icons.Outlined.MoreVert,
                                                 "View More",
@@ -132,7 +137,7 @@ fun ActivityModelScreen(
                                         }
 
                                         DropdownMenu(
-                                            expanded = expanded ,
+                                            expanded = expanded,
                                             modifier = Modifier.width(200.dp),
                                             onDismissRequest = { expanded = false },
                                         ) {
@@ -140,11 +145,13 @@ fun ActivityModelScreen(
                                                 onClick = {
                                                     viewModel.plainlyActivityOnAgenda(
                                                         onSuccess = {
-                                                            dialogText = "Activité ajoutée à l'agenda"
+                                                            dialogText =
+                                                                "Activité ajoutée à l'agenda"
                                                             dialogIsSuccess = true
                                                         },
                                                         onError = {
-                                                            dialogText = "Erreur lors de l'ajout à l'agenda"
+                                                            dialogText =
+                                                                "Erreur lors de l'ajout à l'agenda"
                                                             dialogIsSuccess = false
                                                         }
                                                     )
@@ -174,10 +181,12 @@ fun ActivityModelScreen(
                                                                 dialogIsSuccess = true
                                                             },
                                                             onError = {
-                                                                dialogText = "L'activité n'a pas pu être démarrée"
+                                                                dialogText =
+                                                                    "L'activité n'a pas pu être démarrée"
                                                                 dialogIsSuccess = false
                                                             }
-                                                        )},
+                                                        )
+                                                    },
                                                 ) {
                                                     Icon(Icons.Outlined.PlayArrow, "Start")
                                                     Text(
@@ -186,23 +195,28 @@ fun ActivityModelScreen(
                                                     )
                                                 }
                                             }
-                                            if(it.status == ActivityStatus.IN_PROGRESS){
+                                            if (it.status == ActivityStatus.IN_PROGRESS) {
                                                 DropdownMenuItem(
                                                     onClick = {
                                                         viewModel.markAsDone(
                                                             onSuccess = {
-                                                                dialogText = "Activité marquée comme terminée"
+                                                                dialogText =
+                                                                    "Activité marquée comme terminée"
                                                                 dialogIsSuccess = true
                                                             },
                                                             onError = {
-                                                                dialogText = "L'activité n'a pas pu être terminée"
+                                                                dialogText =
+                                                                    "L'activité n'a pas pu être terminée"
                                                                 dialogIsSuccess = false
                                                             }
                                                         )
                                                     },
                                                 ) {
                                                     Icon(Icons.Outlined.Done, "Done")
-                                                    Text("Marquer comme faite", modifier = Modifier.padding(start = 5.dp))
+                                                    Text(
+                                                        "Marquer comme faite",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
 
                                                 DropdownMenuItem(
@@ -229,44 +243,58 @@ fun ActivityModelScreen(
                                                     )
                                                 }
                                                 DropdownMenuItem(
-                                                    onClick = { viewModel.markAsUnDone(
-                                                        onSuccess = {
-                                                            dialogText = "Activité annulée"
-                                                            dialogIsSuccess = true
-                                                        },
-                                                        onError = {
-                                                            dialogText =
-                                                                "L'activité n'a pas pu être annulée"
-                                                            dialogIsSuccess = false
-                                                        }
-                                                    )},
+                                                    onClick = {
+                                                        viewModel.markAsUnDone(
+                                                            onSuccess = {
+                                                                dialogText = "Activité annulée"
+                                                                dialogIsSuccess = true
+                                                            },
+                                                            onError = {
+                                                                dialogText =
+                                                                    "L'activité n'a pas pu être annulée"
+                                                                dialogIsSuccess = false
+                                                            }
+                                                        )
+                                                    },
                                                 ) {
                                                     Icon(Icons.Outlined.Cancel, "Cancel")
-                                                    Text("Annuler", modifier = Modifier.padding(start = 5.dp))
+                                                    Text(
+                                                        "Annuler",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
                                             }
-                                            if(listOf(ActivityStatus.INIT, ActivityStatus.DONE).contains(it.status)){
+                                            if (listOf(
+                                                    ActivityStatus.INIT,
+                                                    ActivityStatus.DONE
+                                                ).contains(it.status)
+                                            ) {
                                                 DropdownMenuItem(
-                                                    onClick = {viewModel.deleteActivity(
-                                                        onSuccess = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "Activité supprimé"
-                                                                )
+                                                    onClick = {
+                                                        viewModel.deleteActivity(
+                                                            onSuccess = {
+                                                                scope.launch {
+                                                                    snackbarHostState.showSnackbar(
+                                                                        "Activité supprimé"
+                                                                    )
+                                                                }
+                                                                navHostController.popBackStack()
+                                                            },
+                                                            onError = {
+                                                                scope.launch {
+                                                                    snackbarHostState.showSnackbar(
+                                                                        "L'activité n'a pa pu etre supprimée\nRéessayer plus tard"
+                                                                    )
+                                                                }
                                                             }
-                                                            navHostController.popBackStack()
-                                                        },
-                                                        onError = {
-                                                            scope.launch{
-                                                                snackbarHostState.showSnackbar(
-                                                                    "L'activité n'a pa pu etre supprimée\nRéessayer plus tard"
-                                                                )
-                                                            }
-                                                        }
-                                                    )},
+                                                        )
+                                                    },
                                                 ) {
                                                     Icon(Icons.Outlined.Delete, "Delete")
-                                                    Text("Supprimer", modifier = Modifier.padding(start = 5.dp))
+                                                    Text(
+                                                        "Supprimer",
+                                                        modifier = Modifier.padding(start = 5.dp)
+                                                    )
                                                 }
                                             }
 
@@ -305,7 +333,10 @@ fun ActivityModelScreen(
                                         ) {
                                             Text(
                                                 text = it.status.value,
-                                                Modifier.padding(vertical = 5.dp, horizontal = 10.dp),
+                                                Modifier.padding(
+                                                    vertical = 5.dp,
+                                                    horizontal = 10.dp
+                                                ),
                                                 style = MaterialTheme.typography.body1,
                                             )
                                         }
@@ -379,84 +410,87 @@ fun ActivityModelScreen(
                             ) {
                                 when (selectedIndex) {
                                     0 -> {
-                                        var selectionMode by remember{ mutableStateOf(false) }
-                                        LazyColumn(Modifier.fillMaxWidth()){
+                                        var selectionMode by remember { mutableStateOf(false) }
+                                        LazyColumn(Modifier.fillMaxWidth()) {
                                             stickyHeader {
                                                 Row(
                                                     Modifier
                                                         .fillMaxWidth()
-                                                        .padding(
-                                                            horizontal = 12.dp,
-                                                            vertical = 10.dp
-                                                        )
                                                         .background(MaterialTheme.colors.background),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                                ){
-                                                    if(selectionMode){
-
+                                                ) {
+                                                    if (selectionMode) {
                                                         Row(verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier.clickable{
-                                                                if(viewModel.selectedActivityPaddyFields.isEmpty()){
-                                                                    viewModel.selectedActivityPaddyFields = viewModel.activityPaddyFields
-                                                                }else {
-                                                                    viewModel.selectedActivityPaddyFields = listOf()
+                                                            modifier = Modifier
+                                                                .clickable {
+                                                                    if (viewModel.selectedActivityPaddyFields.isEmpty()) {
+                                                                        viewModel.selectedActivityPaddyFields =
+                                                                            viewModel.activityPaddyFields
+                                                                    } else {
+                                                                        viewModel.selectedActivityPaddyFields =
+                                                                            listOf()
+                                                                    }
                                                                 }
-                                                            }
-                                                        ){
-                                                            if (viewModel.selectedActivityPaddyFields.isEmpty()){
+                                                                .padding(
+                                                                    start = 15.dp,
+                                                                    end = 15.dp,
+                                                                    top = 5.dp,
+                                                                    bottom = 5.dp
+                                                                )
+                                                        ) {
+                                                            if (viewModel.selectedActivityPaddyFields.isEmpty()) {
                                                                 Icon(
                                                                     Icons.Outlined.Check,
                                                                     "Tout selectionner",
-                                                                    modifier =Modifier.size(18.dp)
+                                                                    modifier = Modifier.size(18.dp)
                                                                 )
                                                                 Text(
                                                                     text = "Tout selectionner",
-                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    modifier = Modifier.padding(
+                                                                        start = 5.dp
+                                                                    ),
                                                                     fontSize = 12.sp
                                                                 )
-                                                            }else{
+                                                            } else {
                                                                 Icon(
                                                                     Icons.Outlined.CheckBox,
                                                                     "Tout selectionner",
-                                                                    modifier =Modifier.size(18.dp)
+                                                                    modifier = Modifier.size(18.dp)
                                                                 )
                                                                 Text(
                                                                     text = "Tout deselectionner",
-                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    modifier = Modifier.padding(
+                                                                        start = 5.dp
+                                                                    ),
                                                                     fontSize = 12.sp
                                                                 )
                                                             }
 
                                                         }
-                                                        Row(verticalAlignment = Alignment.CenterVertically){
-                                                            Icon(
-                                                                Icons.Outlined.RemoveFromQueue,
-                                                                "remove",
-                                                                modifier =Modifier.size(18.dp))
-                                                            Text(
-                                                                text = "Retirer la selection",
-                                                                modifier = Modifier.padding(start = 5.dp),
-                                                                fontSize = 12.sp
-                                                            )
-                                                        }
 
                                                         Row(verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier.clickable{
+                                                            modifier = Modifier.clickable {
                                                                 selectionMode = false
-                                                                viewModel.selectedActivityPaddyFields = listOf()
-                                                            }){
-                                                            Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
+                                                                viewModel.selectedActivityPaddyFields =
+                                                                    listOf()
+                                                            }) {
+                                                            Icon(
+                                                                Icons.Outlined.Cancel,
+                                                                "cancel",
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
                                                             Text("Annuler",
                                                                 Modifier
                                                                     .clickable {
                                                                         selectionMode = false
                                                                     }
-                                                                    .padding(start = 5.dp),fontSize = 12.sp)
+                                                                    .padding(start = 5.dp),
+                                                                fontSize = 12.sp)
                                                         }
 
-                                                    }else{
-                                                        Row( verticalAlignment = Alignment.CenterVertically,
+                                                    } else {
+                                                        Row(verticalAlignment = Alignment.CenterVertically,
                                                             horizontalArrangement = Arrangement.SpaceBetween,
                                                             modifier = Modifier
                                                                 .clickable {
@@ -477,13 +511,18 @@ fun ActivityModelScreen(
                                                                     bottom = 5.dp
                                                                 )
 
-                                                        ){
-                                                            Icon(Icons.Outlined.FilterList, "Filter")
-                                                            Text(text = "Filtrer",fontSize = 12.sp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Outlined.FilterList,
+                                                                "Filter"
+                                                            )
+                                                            Text(text = "Filtrer", fontSize = 12.sp)
                                                         }
-                                                        IconButton(onClick = { scope.launch {
-                                                            addPaddyFieldModalBottomSheetState.show()
-                                                        } }) {
+                                                        IconButton(onClick = {
+                                                            scope.launch {
+                                                                addPaddyFieldModalBottomSheetState.show()
+                                                            }
+                                                        }) {
                                                             Icon(
                                                                 Icons.Outlined.Add,
                                                                 "Ajouter"
@@ -493,57 +532,204 @@ fun ActivityModelScreen(
 
                                                 }
                                             }
-                                            items(viewModel.activityPaddyFields.size){index ->
-                                                Card(Modifier.fillMaxWidth()
-                                                ) {
-                                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically){
-                                                        if(selectionMode)
-                                                            Checkbox(
-                                                                checked = viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index]) ,
-                                                                onCheckedChange = {
-                                                                    if(it){
-                                                                        if(!viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
-                                                                            viewModel.selectedActivityPaddyFields += viewModel.activityPaddyFields[index]
-                                                                        }
-                                                                    }else{
-                                                                        if(viewModel.selectedActivityPaddyFields.contains(viewModel.activityPaddyFields[index])){
-                                                                            viewModel.selectedActivityPaddyFields -= viewModel.activityPaddyFields[index]
+                                            items(viewModel.activityPaddyFields.size) { index ->
+                                                Swipe(
+                                                    content = {
+                                                        Card(Modifier.fillMaxWidth()) {
+                                                            Row(
+                                                                Modifier.fillMaxWidth(),
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                if (selectionMode)
+                                                                    Checkbox(
+                                                                        checked = viewModel.selectedActivityPaddyFields.contains(
+                                                                            viewModel.activityPaddyFields[index]
+                                                                        ),
+                                                                        onCheckedChange = {
+                                                                            if (it) {
+                                                                                if (!viewModel.selectedActivityPaddyFields.contains(
+                                                                                        viewModel.activityPaddyFields[index]
+                                                                                    )
+                                                                                ) {
+                                                                                    viewModel.selectedActivityPaddyFields += viewModel.activityPaddyFields[index]
+                                                                                }
+                                                                            } else {
+                                                                                if (viewModel.selectedActivityPaddyFields.contains(
+                                                                                        viewModel.activityPaddyFields[index]
+                                                                                    )
+                                                                                ) {
+                                                                                    viewModel.selectedActivityPaddyFields -= viewModel.activityPaddyFields[index]
+                                                                                }
+                                                                            }
+                                                                        })
+
+                                                                PaddyFieldTile(
+                                                                    paddyField = viewModel.activityPaddyFields[index].paddyField,
+                                                                    onLongClick = {
+                                                                        selectionMode =
+                                                                            !selectionMode
+                                                                        viewModel.selectedActivityPaddyFields =
+                                                                            listOf()
+                                                                    },
+                                                                    badgeContent = {
+                                                                        Badge(
+                                                                            backgroundColor = MaterialTheme.colors.primary,
+                                                                            contentColor = MaterialTheme.colors.background,
+                                                                            modifier = Modifier.clip(
+                                                                                CircleShape
+                                                                            ),
+                                                                        ) {
+                                                                            Text(
+                                                                                text = viewModel.activityPaddyFields[index].status.value,
+                                                                                Modifier.padding(
+                                                                                    vertical = 5.dp,
+                                                                                    horizontal = 10.dp
+                                                                                ),
+                                                                                style = MaterialTheme.typography.body1,
+                                                                            )
                                                                         }
                                                                     }
-                                                                })
+                                                                )
+                                                            }
 
-                                                        PaddyFieldTile(
-                                                            paddyField = viewModel.activityPaddyFields[index].paddyField,
-                                                            onLongClick = {
-                                                                selectionMode = !selectionMode
-                                                                viewModel.selectedActivityPaddyFields = listOf()
-                                                            },
-                                                            badgeContent = {
-                                                                Badge(
-                                                                    backgroundColor = MaterialTheme.colors.primary,
-                                                                    contentColor = MaterialTheme.colors.background,
-                                                                    modifier = Modifier.clip(CircleShape),
-                                                                ) {
-                                                                    Text(
-                                                                        text = viewModel.activityPaddyFields[index].status.value,
-                                                                        Modifier.padding(vertical = 5.dp, horizontal = 10.dp),
-                                                                        style = MaterialTheme.typography.body1,
-                                                                    )
+                                                        }
+                                                    },
+                                                    leftContent = {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxSize()
+                                                                .background(MaterialTheme.colors.primary)
+                                                        ) {
+                                                            Column(
+                                                                modifier = Modifier
+                                                                    .align(Alignment.CenterStart)
+                                                                    .padding(start = 15.dp)
+                                                            ) {
+                                                                when (viewModel.activityPaddyFields[index].status) {
+                                                                    ActivityStatus.INIT -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.PlayArrow,
+                                                                            contentDescription = null,
+                                                                            tint = MaterialTheme.colors.background,
+                                                                            modifier = Modifier.align(
+                                                                                Alignment.CenterHorizontally
+                                                                            )
+                                                                        )
+                                                                        Spacer(
+                                                                            modifier = Modifier.heightIn(
+                                                                                5.dp
+                                                                            )
+                                                                        )
+                                                                        Text(
+                                                                            text = "Demarrer",
+                                                                            textAlign = TextAlign.Center,
+                                                                            fontWeight = FontWeight.Bold,
+                                                                            color = MaterialTheme.colors.background
+                                                                        )
+                                                                    }
+                                                                    ActivityStatus.IN_PROGRESS -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.Done,
+                                                                            contentDescription = null,
+                                                                            tint = MaterialTheme.colors.background,
+                                                                            modifier = Modifier.align(
+                                                                                Alignment.CenterHorizontally
+                                                                            )
+                                                                        )
+                                                                        Spacer(
+                                                                            modifier = Modifier.heightIn(
+                                                                                5.dp
+                                                                            )
+                                                                        )
+                                                                        Text(
+                                                                            text = "Terminer",
+                                                                            textAlign = TextAlign.Center,
+                                                                            fontWeight = FontWeight.Bold,
+                                                                            color = MaterialTheme.colors.background
+                                                                        )
+                                                                    }
+                                                                    else -> {
+
+                                                                    }
                                                                 }
                                                             }
-                                                        )
-                                                    }
+                                                        }
+                                                    },
+                                                    rightContent = {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxSize()
+                                                                .background(MaterialTheme.colors.error)
+                                                        ) {
+                                                            Column(
+                                                                modifier = Modifier
+                                                                    .align(Alignment.CenterEnd)
+                                                                    .padding(end = 15.dp)
+                                                            ) {
+                                                                when (viewModel.activityPaddyFields[index].status) {
+                                                                    ActivityStatus.INIT -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.Delete,
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.align(
+                                                                                Alignment.CenterHorizontally
+                                                                            )
+                                                                        )
+                                                                        Spacer(
+                                                                            modifier = Modifier.heightIn(
+                                                                                5.dp
+                                                                            )
+                                                                        )
+                                                                        Text(
+                                                                            text = "Supprimer",
+                                                                            textAlign = TextAlign.Center,
+                                                                            fontWeight = FontWeight.Bold,
+                                                                        )
+                                                                    }
+                                                                    ActivityStatus.IN_PROGRESS -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.Delete,
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.align(
+                                                                                Alignment.CenterHorizontally
+                                                                            )
+                                                                        )
+                                                                        Spacer(
+                                                                            modifier = Modifier.heightIn(
+                                                                                5.dp
+                                                                            )
+                                                                        )
+                                                                        Text(
+                                                                            text = "Non Fait",
+                                                                            textAlign = TextAlign.Center,
+                                                                            fontWeight = FontWeight.Bold,
+                                                                        )
+                                                                    }
+                                                                    else -> {
 
-                                                }
+                                                                    }
+                                                                }
+
+                                                            }
+                                                        }
+                                                    },
+                                                    onSwipeToLeft = {
+
+                                                    },
+                                                    onSwipeToRight = {
+
+                                                    }
+                                                )
                                             }
                                         }
                                     }
                                     1 -> {
-                                        var selectionMode by remember{ mutableStateOf(false) }
+                                        var selectionMode by remember { mutableStateOf(false) }
                                         LazyColumn(
                                             Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 8.dp)){
+                                                .padding(vertical = 8.dp)
+                                        ) {
                                             stickyHeader {
                                                 Row(
                                                     Modifier
@@ -555,48 +741,55 @@ fun ActivityModelScreen(
                                                         .background(MaterialTheme.colors.background),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                                ){
-                                                    if(selectionMode){
+                                                ) {
+                                                    if (selectionMode) {
 
                                                         Row(verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier.clickable{
-                                                                if(viewModel.selectedActivityWorkers.isEmpty()){
-                                                                    viewModel.selectedActivityWorkers = viewModel.activityWorkers
-                                                                }else {
-                                                                    viewModel.selectedActivityWorkers = listOf()
+                                                            modifier = Modifier.clickable {
+                                                                if (viewModel.selectedActivityWorkers.isEmpty()) {
+                                                                    viewModel.selectedActivityWorkers =
+                                                                        viewModel.activityWorkers
+                                                                } else {
+                                                                    viewModel.selectedActivityWorkers =
+                                                                        listOf()
                                                                 }
                                                             }
-                                                        ){
-                                                            if (viewModel.selectedActivityWorkers.isEmpty()){
+                                                        ) {
+                                                            if (viewModel.selectedActivityWorkers.isEmpty()) {
                                                                 Icon(
                                                                     Icons.Outlined.Check,
                                                                     "Tout selectionner",
-                                                                    modifier =Modifier.size(18.dp)
+                                                                    modifier = Modifier.size(18.dp)
                                                                 )
                                                                 Text(
                                                                     text = "Tout selectionner",
-                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    modifier = Modifier.padding(
+                                                                        start = 5.dp
+                                                                    ),
                                                                     fontSize = 12.sp
                                                                 )
-                                                            }else{
+                                                            } else {
                                                                 Icon(
                                                                     Icons.Outlined.CheckBox,
                                                                     "Tout selectionner",
-                                                                    modifier =Modifier.size(18.dp)
+                                                                    modifier = Modifier.size(18.dp)
                                                                 )
                                                                 Text(
                                                                     text = "Tout deselectionner",
-                                                                    modifier = Modifier.padding(start = 5.dp),
+                                                                    modifier = Modifier.padding(
+                                                                        start = 5.dp
+                                                                    ),
                                                                     fontSize = 12.sp
                                                                 )
                                                             }
 
                                                         }
-                                                        Row(verticalAlignment = Alignment.CenterVertically){
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                                             Icon(
                                                                 Icons.Outlined.RemoveFromQueue,
                                                                 "remove",
-                                                                modifier =Modifier.size(18.dp))
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
                                                             Text(
                                                                 text = "Retirer la selection",
                                                                 modifier = Modifier.padding(start = 5.dp),
@@ -605,21 +798,27 @@ fun ActivityModelScreen(
                                                         }
 
                                                         Row(verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier.clickable{
+                                                            modifier = Modifier.clickable {
                                                                 selectionMode = false
-                                                                viewModel.selectedActivityWorkers = listOf()
-                                                            }){
-                                                            Icon(Icons.Outlined.Cancel, "cancel",modifier =Modifier.size(18.dp))
+                                                                viewModel.selectedActivityWorkers =
+                                                                    listOf()
+                                                            }) {
+                                                            Icon(
+                                                                Icons.Outlined.Cancel,
+                                                                "cancel",
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
                                                             Text("Annuler",
                                                                 Modifier
                                                                     .clickable {
                                                                         selectionMode = false
                                                                     }
-                                                                    .padding(start = 5.dp),fontSize = 12.sp)
+                                                                    .padding(start = 5.dp),
+                                                                fontSize = 12.sp)
                                                         }
 
-                                                    }else{
-                                                        Row( verticalAlignment = Alignment.CenterVertically,
+                                                    } else {
+                                                        Row(verticalAlignment = Alignment.CenterVertically,
                                                             horizontalArrangement = Arrangement.SpaceBetween,
                                                             modifier = Modifier
                                                                 .clickable {
@@ -635,11 +834,14 @@ fun ActivityModelScreen(
                                                                     bottom = 5.dp
                                                                 )
 
-                                                        ){
-                                                            Icon(Icons.Outlined.FilterList, "Filter")
-                                                            Text(text = "Filtrer",fontSize = 12.sp)
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Outlined.FilterList,
+                                                                "Filter"
+                                                            )
+                                                            Text(text = "Filtrer", fontSize = 12.sp)
                                                         }
-                                                        IconButton(onClick = { scope.launch{addWorkersModalBottomSheetState.show()} }) {
+                                                        IconButton(onClick = { scope.launch { addWorkersModalBottomSheetState.show() } }) {
                                                             Icon(
                                                                 Icons.Outlined.Add,
                                                                 "Ajouter"
@@ -649,10 +851,15 @@ fun ActivityModelScreen(
 
                                                 }
                                             }
-                                            items(viewModel.activityWorkers.size){index ->
-                                                Card(Modifier
-                                                    .fillMaxWidth()) {
-                                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                            items(viewModel.activityWorkers.size) { index ->
+                                                Card(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                ) {
+                                                    Row(
+                                                        Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
                                                         if (selectionMode)
                                                             Checkbox(
                                                                 checked = viewModel.selectedActivityWorkers.contains(
@@ -679,7 +886,8 @@ fun ActivityModelScreen(
                                                             worker = viewModel.activityWorkers[index].worker,
                                                             onLongClick = {
                                                                 selectionMode = !selectionMode
-                                                                viewModel.selectedActivityWorkers = listOf()
+                                                                viewModel.selectedActivityWorkers =
+                                                                    listOf()
                                                             }
                                                         )
                                                     }
@@ -689,18 +897,19 @@ fun ActivityModelScreen(
                                         }
 
                                     }
-                                    2 ->{
+                                    2 -> {
                                         LazyColumn(
                                             Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 8.dp)){
-                                            items(viewModel.activityResources.size){index ->
+                                                .padding(vertical = 8.dp)
+                                        ) {
+                                            items(viewModel.activityResources.size) { index ->
                                                 Card(
                                                     Modifier
                                                         .fillMaxWidth()
                                                         .padding(vertical = 8.dp)
                                                         .clickable { }) {
-                                                    Column(Modifier.fillMaxWidth()){
+                                                    Column(Modifier.fillMaxWidth()) {
                                                         ResourceTile(
                                                             resource = viewModel.activityResources[index].resource,
                                                         )
@@ -712,13 +921,17 @@ fun ActivityModelScreen(
                                                                     start = 10.dp,
                                                                     end = 10.dp
                                                                 ),
-                                                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                            Text("Quantite utilisee : ${viewModel.activityResources[index].quantity}",
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text(
+                                                                "Quantite utilisee : ${viewModel.activityResources[index].quantity}",
                                                                 style = MaterialTheme.typography.body1,
                                                                 modifier = Modifier.padding(start = 20.dp),
                                                                 fontWeight = FontWeight.Bold
                                                             )
-                                                            Text("Cout : ${viewModel.activityResources[index].value} FCFA",
+                                                            Text(
+                                                                "Cout : ${viewModel.activityResources[index].value} FCFA",
                                                                 style = MaterialTheme.typography.body1,
                                                                 modifier = Modifier.padding(start = 20.dp),
                                                                 fontWeight = FontWeight.Bold
@@ -735,28 +948,32 @@ fun ActivityModelScreen(
                         }
                         AddPaddyFieldModalBottomSheet(
                             modalBottomSheetState = addPaddyFieldModalBottomSheetState,
-                            viewModel =  remember {AddPaddyFieldViewModel(
-                                alreadyExists = viewModel.activityPaddyFields,
-                                onAddPaddyFields = { addedActivityPaddyFields ->
-                                    viewModel.activityPaddyFields += addedActivityPaddyFields
-                                    scope.launch {
-                                        addPaddyFieldModalBottomSheetState.hide()
-                                    }
-                                },
-                                activityCode = it.code)
+                            viewModel = remember {
+                                AddPaddyFieldViewModel(
+                                    alreadyExists = viewModel.activityPaddyFields,
+                                    onAddPaddyFields = { addedActivityPaddyFields ->
+                                        viewModel.activityPaddyFields += addedActivityPaddyFields
+                                        scope.launch {
+                                            addPaddyFieldModalBottomSheetState.hide()
+                                        }
+                                    },
+                                    activityCode = it.code
+                                )
                             }
                         )
                         AddWorkersModalBottomSheet(
                             modalBottomSheetState = addWorkersModalBottomSheetState,
-                            viewModel =  remember {AddWorkersViewModel(
-                                alreadyExists = viewModel.activityWorkers,
-                                onAddWorkersToActivity = { addedWorkers ->
-                                    viewModel.activityWorkers += addedWorkers
-                                    scope.launch {
-                                        addWorkersModalBottomSheetState.hide()
-                                    }
-                                },
-                                activityCode = it.code)
+                            viewModel = remember {
+                                AddWorkersViewModel(
+                                    alreadyExists = viewModel.activityWorkers,
+                                    onAddWorkersToActivity = { addedWorkers ->
+                                        viewModel.activityWorkers += addedWorkers
+                                        scope.launch {
+                                            addWorkersModalBottomSheetState.hide()
+                                        }
+                                    },
+                                    activityCode = it.code
+                                )
                             }
                         )
                     }
@@ -802,8 +1019,8 @@ class ActivityViewModel(val code: String) : ViewModel() {
                 })
         }
     }
-    
-    private fun getActivityResources(){
+
+    private fun getActivityResources() {
         activity?.let {
             viewModelScope.launch {
                 ApiEndpoint.activityRepository.getActivityResources(it.code)
@@ -819,10 +1036,10 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     })
             }
         }
-        
+
     }
-    
-    private fun getActivityWorkers(){
+
+    private fun getActivityWorkers() {
         activity?.let {
             viewModelScope.launch {
                 ApiEndpoint.activityRepository.getActivityWorkers(it.code)
@@ -838,11 +1055,11 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     })
             }
         }
-        
+
     }
 
-    
-    private fun getActivityPaddyFields(){
+
+    private fun getActivityPaddyFields() {
         activity?.let {
             viewModelScope.launch {
                 ApiEndpoint.activityRepository.getActivityPaddyFields(it.code)
@@ -858,10 +1075,10 @@ class ActivityViewModel(val code: String) : ViewModel() {
                     })
             }
         }
-        
+
     }
 
-    fun markAsDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun markAsDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
             ApiEndpoint.activityRepository.doneActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
@@ -879,7 +1096,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
         }
     }
 
-    fun markAsUnDone(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun markAsUnDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
             ApiEndpoint.activityRepository.undoneActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
@@ -901,7 +1118,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
 
     }
 
-    fun markAsStarted(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun markAsStarted(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
             ApiEndpoint.activityRepository.startedActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
@@ -923,7 +1140,7 @@ class ActivityViewModel(val code: String) : ViewModel() {
     }
 
 
-    fun cancelActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun cancelActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
             ApiEndpoint.activityRepository.cancelActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
@@ -945,10 +1162,10 @@ class ActivityViewModel(val code: String) : ViewModel() {
         }
     }
 
-    fun deleteActivity(onSuccess: ()-> Unit = {}, onError: ()-> Unit){
+    fun deleteActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
             ApiEndpoint.activityRepository.delete(activity!!.code)
-                .enqueue(object: Callback<Void>{
+                .enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
                             onSuccess()
@@ -990,54 +1207,85 @@ class ActivityViewModel(val code: String) : ViewModel() {
         }
     }
 
+    fun removeActivityPaddyFieldFromActivity(activityPaddyField: ActivityPaddyField){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.deletePaddyFieldFromActivity(
+                activity!!.code,
+                activityPaddyField.code
+            )
+        }
+    }
+
+    fun startActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.startedPaddyField(
+                activity!!.code,
+                activityPaddyField.code
+            )
+        }
+    }
+
+    fun undoneActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.undonePaddyField(
+                activity!!.code,
+                activityPaddyField.code
+            )
+        }
+    }
+
+    fun doneActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+        viewModelScope.launch {
+            ApiEndpoint.activityRepository.donePaddyField(
+                activity!!.code,
+                activityPaddyField.code
+            )
+        }
+    }
+
+
 
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun Swipe(content: @Composable () -> Unit) {
-    val dismissState = rememberDismissState(
-        initialValue = DismissValue.Default
-    )
+fun Swipe(
+    content: @Composable () -> Unit,
+    onSwipeToLeft: () -> Unit = {},
+    onSwipeToRight: () -> Unit = {},
+    leftContent: @Composable () -> Unit = {},
+    rightContent: @Composable () -> Unit = {}
+) {
+    val dismissState = rememberDismissState(initialValue = DismissValue.Default)
+    val scope = rememberCoroutineScope()
     SwipeToDismiss(
         state = dismissState,
         background = {
-            val color = Color.Transparent
-            val direction = dismissState.dismissDirection
-            if (direction == DismissDirection.EndToStart) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            tint = Color.Red,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        Spacer(modifier = Modifier.heightIn(5.dp))
-                        Text(
-                            text = "Retirer",
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Red
-                        )
-
+            when (dismissState.dismissDirection) {
+                DismissDirection.EndToStart -> {
+                    rightContent()
+                    onSwipeToLeft().also {
+                        scope.launch {
+                            dismissState.reset()
+                        }
                     }
+                }
+                DismissDirection.StartToEnd -> {
+                    leftContent()
+                    onSwipeToRight().also {
+                        scope.launch {
+                            dismissState.reset()
+                        }
+                    }
+                }
+                else -> {
+                    content()
                 }
             }
         },
-        /**** Dismiss Content */
-        dismissContent = {
-            content()
-        },
-        /*** Set Direction to dismiss */
-        directions = setOf(DismissDirection.EndToStart),
+        dismissContent = { content() },
+        directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
     )
+
+
 }

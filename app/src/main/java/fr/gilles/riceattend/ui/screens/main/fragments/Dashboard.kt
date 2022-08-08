@@ -13,12 +13,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.bytebeats.views.charts.line.LineChart
+import me.bytebeats.views.charts.line.LineChartData
+import me.bytebeats.views.charts.line.render.line.SolidLineDrawer
+import me.bytebeats.views.charts.line.render.point.FilledCircularPointDrawer
+import me.bytebeats.views.charts.line.render.xaxis.SimpleXAxisDrawer
+import me.bytebeats.views.charts.line.render.yaxis.SimpleYAxisDrawer
+import me.bytebeats.views.charts.simpleChartAnimation
 
 @Composable
-@Preview
+@Preview("LineChart")
 fun DashboardFragment(onMenuClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
@@ -102,8 +110,46 @@ fun DashboardFragment(onMenuClick: () -> Unit = {}) {
             modifier = Modifier.padding(vertical = 6.dp, horizontal = 15.dp)
         )
 
+        LineChartView()
+
 
     }
 
+}
+
+@Composable
+fun LineChartView() {
+    LineChart(
+        modifier = Modifier.fillMaxWidth().height(250.dp)
+            .padding(10.dp).clip(RoundedCornerShape(10.dp)).background(Color.White)
+            .padding(top = 20.dp, bottom = 20.dp, end = 20.dp ),
+        lineChartData = LineChartData(
+            points = listOf(
+                LineChartData.Point(10F, "Line 1"),
+                LineChartData.Point(20F, "Line 2"),
+                LineChartData.Point(2F, "Line 3"),
+                LineChartData.Point(7F, "Line 4"),
+                LineChartData.Point(50F, "Line 5"),
+                LineChartData.Point(30F, "Line 6"),
+                LineChartData.Point(10F, "Line 7")
+            )
+        ),
+        // Optional properties.
+        animation = simpleChartAnimation(),
+        pointDrawer = FilledCircularPointDrawer(
+            diameter = 2.dp,
+            color = MaterialTheme.colors.primary
+        ),
+        lineDrawer =SolidLineDrawer(
+            color = MaterialTheme.colors.primary,
+            thickness = 2.dp
+        ),
+        xAxisDrawer = SimpleXAxisDrawer(
+        ),
+        yAxisDrawer = SimpleYAxisDrawer(
+            drawLabelEvery = 5
+        ),
+        horizontalOffset = 0f,
+    )
 }
 

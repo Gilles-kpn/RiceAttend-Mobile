@@ -82,5 +82,8 @@ dependencies {
     implementation ('com.airbnb.android:lottie-compose:5.2.0')
     implementation "androidx.datastore:datastore-preferences:1.0.0"
 
+    //chart
+    implementation('io.github.bytebeats:compose-charts:0.1.2')
+
 }
 
