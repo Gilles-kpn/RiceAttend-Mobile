@@ -3,8 +3,10 @@ package fr.gilles.riceattend.ui.screens.main
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -53,7 +55,8 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp)),
+            .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column(

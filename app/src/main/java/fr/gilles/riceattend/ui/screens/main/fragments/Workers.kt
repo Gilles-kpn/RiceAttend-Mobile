@@ -1,7 +1,6 @@
 package fr.gilles.riceattend.ui.screens.main.fragments
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,20 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import fr.gilles.riceattend.services.api.ApiCallback
-import fr.gilles.riceattend.services.api.ApiEndpoint
-import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.*
-import fr.gilles.riceattend.ui.formfields.EmailFieldState
-import fr.gilles.riceattend.ui.formfields.TextFieldState
 import fr.gilles.riceattend.ui.navigation.Route
+import fr.gilles.riceattend.ui.viewmodel.WorkersVM
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.regex.Pattern
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -41,7 +32,7 @@ fun WorkersFragment(
     navHostController: NavHostController,
     scope: CoroutineScope = rememberCoroutineScope(),
     snackbarHostState: SnackbarHostState,
-    viewModel: WorkersViewModel = remember { WorkersViewModel() }
+    viewModel: WorkersVM = WorkersVM()
 ) {
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -106,12 +97,7 @@ fun WorkersFragment(
                     LoadingCard()
                 }
                 false -> {
-                    when (viewModel.workers) {
-                        null -> {
-                            LoadingCard()
-                        }
-                        else -> {
-                            viewModel.workers?.let {
+                  viewModel.workers?.let {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -142,8 +128,6 @@ fun WorkersFragment(
                                     }
                                 }
                             }
-                        }
-                    }
                 }
             }
         }
@@ -151,7 +135,7 @@ fun WorkersFragment(
     ModalBottomSheetLayout(
         sheetContent = {
             WorkerForm(
-                workerFormViewModel = viewModel.workerFormViewModel,
+                workerFormVM = viewModel.workerFormVM,
                 onSubmit = {
                     viewModel.create(
                         onSuccess = { created = true },
@@ -165,145 +149,3 @@ fun WorkersFragment(
     ) {}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-class WorkersViewModel : ViewModel() {
-    var searchState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { true },
-            errorMessage = { "" },
-        )
-    )
-    var params by mutableStateOf(Params())
-    var workers by mutableStateOf<Page<Worker>?>(null)
-    var loading by mutableStateOf(false)
-    var workerFormViewModel by mutableStateOf(WorkerFormViewModel())
-    var creationLoading by mutableStateOf(false)
-
-
-    init {
-        loadWorkers()
-    }
-
-    private fun loadWorkers() {
-        loading = true
-
-        viewModelScope.launch {
-            Log.d("WorkersViewModel", "loadWorkers")
-            ApiEndpoint.workerRepository.get(params.toMap())
-                .enqueue(object : ApiCallback<Page<Worker>>() {
-                    override fun onSuccess(response: Page<Worker>) {
-                        workers = response
-                        loading = false
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        loading = false
-                        Log.d("WorkerViewModel", error.message)
-                    }
-                })
-        }
-    }
-
-    fun create(onError: (String) -> Unit = {}, onSuccess: () -> Unit = {}) {
-        creationLoading = true
-        viewModelScope.launch {
-            ApiEndpoint.workerRepository.create(workerFormViewModel.toWorkerPayload())
-                .enqueue(object : ApiCallback<Worker>() {
-                    override fun onSuccess(response: Worker) {
-                        creationLoading = false
-                        workers?.let {
-                            it.content = it.content + (response)
-                        }
-                        onSuccess()
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        creationLoading = false
-                        onError(error.message)
-                        Log.d("WorkerViewModel", error.message)
-                    }
-                })
-        }
-    }
-}
-
-
-class WorkerFormViewModel {
-
-    var firstNameState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Nom requis" },
-        )
-    )
-    var lastNameState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Prénom requis" },
-        )
-    )
-    var phoneState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = {
-                Pattern.matches(
-                    "^(\\+\\d{1,3}( )?)?((\\(\\d{3}\\))|\\d{3})[- .]?\\d{3}[- .]?\\d{4}\$",
-                    it
-                )
-            },
-            errorMessage = { "Téléphone requis" },
-        )
-    )
-    var emailState by mutableStateOf(EmailFieldState())
-
-    var hourlyPayState by mutableStateOf(
-        TextFieldState(
-            defaultValue = 1,
-            validator = { it > 0 },
-            errorMessage = { "Paye horaire requis superieur 1 FCFA" },
-        )
-    )
-
-    var addressCountryState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Pays requis" },
-        )
-    )
-
-    var addressCityState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Ville requise" },
-        )
-    )
-
-    var addressStreetState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Rue requise" },
-        )
-    )
-
-    fun toWorkerPayload(): WorkerPayload {
-        return WorkerPayload(
-            name = firstNameState.value + " " + lastNameState.value,
-            firstName = firstNameState.value,
-            lastName = lastNameState.value,
-            phone = phoneState.value,
-            email = emailState.value,
-            hourlyPay = hourlyPayState.value,
-            address = Address(
-                country = addressCountryState.value,
-                city = addressCityState.value,
-                street = addressStreetState.value
-            )
-        )
-    }
-}

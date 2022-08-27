@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 @Composable
 @RequiresApi(Build.VERSION_CODES.O)
 fun LoginFormWidget(
-    viewModel: LoginFormViewModel = remember{ LoginFormViewModel() },
+    viewModel: LoginFormViewModel = LoginFormViewModel(),
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}

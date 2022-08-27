@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 @Preview
 @RequiresApi(Build.VERSION_CODES.O)
 fun RegisterForm(
-    viewModel: RegisterFormViewModel = remember{ RegisterFormViewModel() },
+    viewModel: RegisterFormViewModel = RegisterFormViewModel() ,
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}

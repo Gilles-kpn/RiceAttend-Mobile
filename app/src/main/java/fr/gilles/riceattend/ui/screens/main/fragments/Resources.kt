@@ -14,13 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import fr.gilles.riceattend.services.api.ApiCallback
-import fr.gilles.riceattend.services.api.ApiEndpoint
-import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
-import fr.gilles.riceattend.ui.formfields.TextFieldState
+import fr.gilles.riceattend.ui.viewmodel.ResourcesVM
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,7 +27,7 @@ import kotlinx.coroutines.launch
 fun ResourcesFragment(
     onMenuClick: () -> Unit = {},
     scope: CoroutineScope = rememberCoroutineScope(),
-    viewModel: ResourcesViewModel = remember { ResourcesViewModel() }
+    viewModel: ResourcesVM = ResourcesVM()
 ) {
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -153,25 +148,25 @@ fun ResourcesFragment(
                     Icon(Icons.Outlined.Agriculture, "Resource")
                     Text(text = "Creer une ressource")
                 }
-                InputWidget(state = viewModel.resourceFormViewModel.name, title = "Nom")
+                InputWidget(state = viewModel.resourceFormVM.name, title = "Nom")
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = viewModel.resourceFormViewModel.quantity,
+                            state = viewModel.resourceFormVM.quantity,
                             title = "Quantite",
                             icon = Icons.Outlined.Countertops
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = viewModel.resourceFormViewModel.price,
+                            state = viewModel.resourceFormVM.price,
                             title = "Prix Unitaire",
                             icon = Icons.Outlined.PriceChange
                         )
                     }
                 }
                 InputDropDownSelect(
-                    state = viewModel.resourceFormViewModel.type,
+                    state = viewModel.resourceFormVM.type,
                     list = types,
                     template = {
                         Text(text = it.name)
@@ -179,10 +174,10 @@ fun ResourcesFragment(
                     title = "Type de ressource"
                 )
                 Button(
-                    enabled = !viewModel.resourceFormViewModel.loading && (
-                            viewModel.resourceFormViewModel.name.isValid() &&
-                                    viewModel.resourceFormViewModel.quantity.isValid() &&
-                                    viewModel.resourceFormViewModel.type.isValid()
+                    enabled = !viewModel.resourceFormVM.loading && (
+                            viewModel.resourceFormVM.name.isValid() &&
+                                    viewModel.resourceFormVM.quantity.isValid() &&
+                                    viewModel.resourceFormVM.type.isValid()
                             ),
                     onClick = {
                         viewModel.create({ created = true }, {
@@ -196,7 +191,7 @@ fun ResourcesFragment(
                         .padding(10.dp)
                         .height(50.dp)
                 ) {
-                    if (viewModel.resourceFormViewModel.loading) {
+                    if (viewModel.resourceFormVM.loading) {
                         CircularProgressIndicator()
                     } else {
                         Text("Enregistrer", style = MaterialTheme.typography.button)
@@ -208,112 +203,6 @@ fun ResourcesFragment(
         sheetState = modalBottomSheetState,
         sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {}
-
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-class ResourcesViewModel : ViewModel() {
-    var resources by mutableStateOf<Page<Resource>?>(null)
-    var params by mutableStateOf(Params())
-    var loading by mutableStateOf(false)
-    var searchState by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { true },
-            errorMessage = { "" },
-        )
-    )
-    val resourceFormViewModel by mutableStateOf(ResourceFormViewModel())
-
-
-    init {
-        loadResources()
-    }
-
-    private fun loadResources() {
-        loading = true
-        viewModelScope.launch {
-            ApiEndpoint.resourceRepository.get(params.toMap())
-                .enqueue(object : ApiCallback<Page<Resource>>() {
-                    override fun onSuccess(response: Page<Resource>) {
-                        resources = response
-                        loading = false
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        loading = false
-                    }
-                })
-        }
-
-    }
-
-    fun create(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        resourceFormViewModel.loading = true
-        viewModelScope.launch {
-            ApiEndpoint.resourceRepository.create(resourceFormViewModel.toResourcePayload())
-                .enqueue(object : ApiCallback<Resource>() {
-                    override fun onSuccess(response: Resource) {
-                        resources?.let {
-                            it.content = it.content + response
-                        }
-                        resourceFormViewModel.loading = false
-                        onSuccess()
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        resourceFormViewModel.loading = false
-                        onError(error.message)
-                    }
-                })
-        }
-    }
-}
-
-class ResourceFormViewModel {
-    var loading by mutableStateOf(false)
-    var name by mutableStateOf(
-        TextFieldState(
-            defaultValue = "",
-            validator = { it.isNotBlank() },
-            errorMessage = { "Nom requis" },
-        )
-    )
-
-    var quantity by mutableStateOf(
-        TextFieldState(
-            defaultValue = 1,
-            validator = { it > 0 },
-            errorMessage = { "Quantie requise superieur a 1" },
-        )
-    )
-
-    var price by mutableStateOf(
-        TextFieldState(
-            defaultValue = 1,
-            validator = { it > 0 },
-            errorMessage = { "Quantie requise superieur a 1" },
-        )
-    )
-
-    var type by mutableStateOf(
-        TextFieldState(
-            defaultValue = ResourceType.WATER,
-            validator = { it.name.isNotBlank() },
-            errorMessage = { "Choisissez un type valide" },
-        )
-    )
-
-
-    fun toResourcePayload(): ResourcePayload {
-        return ResourcePayload(
-            unitPrice = price.value.toLong(),
-            name = name.value,
-            resourceType = type.value,
-            quantity = quantity.value.toLong()
-        )
-    }
-
 
 }
 

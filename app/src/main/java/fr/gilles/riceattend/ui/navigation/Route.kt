@@ -19,6 +19,9 @@ import fr.gilles.riceattend.ui.screens.auth.RegisterScreen
 import fr.gilles.riceattend.ui.screens.main.MainScreen
 import fr.gilles.riceattend.ui.screens.main.fragments.*
 import fr.gilles.riceattend.ui.screens.main.modelstemplate.*
+import fr.gilles.riceattend.ui.viewmodel.ActivityVM
+import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVM
+import fr.gilles.riceattend.ui.viewmodel.WorkerVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -163,10 +166,10 @@ fun NavigationContent(
                 arguments = listOf(navArgument("code") { type = NavType.StringType })
             ) {
                 it.arguments?.let { bundle ->
-                    WorkerModelScreen(
+                    WorkerPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = WorkerViewModel(bundle["code"] as String),
+                        viewModel = WorkerVM(bundle["code"] as String),
                     )
                 }
 
@@ -177,11 +180,11 @@ fun NavigationContent(
                 arguments = listOf(navArgument("code") { type = NavType.StringType })
             ) {
                 it.arguments?.let { bundle ->
-                    ActivityModelScreen(
+                    ActivityPage(
                         onMenuClick = { scope.launch { navHostController.popBackStack() } },
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = ActivityViewModel(bundle["code"] as String),
+                        viewModel = ActivityVM(bundle["code"] as String),
                     )
                 }
             }
@@ -190,10 +193,10 @@ fun NavigationContent(
                 arguments = listOf(navArgument("code") { type = NavType.StringType })
             ) {
                 it.arguments?.let { bundle ->
-                    PaddyFieldModelScreen(
+                    PaddyFieldPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = PaddyFieldViewModel(bundle["code"] as String),
+                        viewModel = PaddyFieldVM(bundle["code"] as String),
                     )
                 }
 

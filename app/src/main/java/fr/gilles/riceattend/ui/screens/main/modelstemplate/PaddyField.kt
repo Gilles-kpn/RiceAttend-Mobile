@@ -1,15 +1,11 @@
 package fr.gilles.riceattend.ui.screens.main.modelstemplate
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -23,30 +19,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
-import fr.gilles.riceattend.services.api.ApiCallback
-import fr.gilles.riceattend.services.api.ApiEndpoint
-import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.*
-import fr.gilles.riceattend.ui.screens.main.fragments.PaddyFieldFormViewModel
+import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVM
 import fr.gilles.riceattend.ui.widget.components.ActivityTile
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
 import fr.gilles.riceattend.ui.widget.components.PaddyFieldForm
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PaddyFieldModelScreen(
+fun PaddyFieldPage(
     snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
-    viewModel: PaddyFieldViewModel
+    viewModel: PaddyFieldVM
 ) {
 
     val scope = rememberCoroutineScope()
@@ -256,7 +244,7 @@ fun PaddyFieldModelScreen(
         sheetContent = {
             PaddyFieldForm(
                 title = "Modifier la riziere",
-                paddyFormViewModel = viewModel.paddyfieldFormViewModel,
+                paddyFormViewModel = viewModel.paddyfieldFormVM,
                 plants = viewModel.plants,
                 onClick = {
                     viewModel.update(onError = {
@@ -277,117 +265,3 @@ fun PaddyFieldModelScreen(
     ) {}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-class PaddyFieldViewModel(val code: String) : ViewModel() {
-    var loading by mutableStateOf(false)
-    var paddyField by mutableStateOf<PaddyField?>(null)
-    var plants by mutableStateOf<Page<Plant>?>(null)
-    var paddyfieldFormViewModel by mutableStateOf(PaddyFieldFormViewModel())
-    var updateLoading by mutableStateOf(false)
-    var paddyFieldActivities by mutableStateOf<List<ActivityPaddyField>>( listOf())
-
-
-    init {
-        loadPaddyField()
-        loadPlants()
-    }
-
-     private fun loadPaddyField() {
-        loading = true
-        viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(code)
-                .enqueue(object : ApiCallback<PaddyField>() {
-                    override fun onSuccess(response: PaddyField) {
-                        paddyField = response
-                        initUpdateForm()
-                        loadPaddyFieldActivities()
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        loading = false
-                        Log.d("PaddyFieldViewModel", "Error: ${error.message}")
-                    }
-
-                })
-        }
-    }
-
-    private fun initUpdateForm() {
-        paddyField?.let {
-            paddyfieldFormViewModel.name.value = it.name
-            paddyfieldFormViewModel.surface_unit.value = it.surface.unit
-            paddyfieldFormViewModel.surface_value.value = it.surface.value.toInt()
-            paddyfieldFormViewModel.numberOfPlants.value = it.numberOfPlants
-            paddyfieldFormViewModel.plant.value = it.plant
-            paddyfieldFormViewModel.description.value =
-                if (it.description.isNullOrEmpty()) "" else it.description!!
-        }
-    }
-
-
-    fun update(onError: (String) -> Unit) {
-        updateLoading = true
-        viewModelScope.launch {
-            paddyField?.let {
-                ApiEndpoint.paddyFieldRepository.update(
-                    it.code,
-                    paddyfieldFormViewModel.toPaddyFieldPayload()
-                )
-                    .enqueue(object : ApiCallback<PaddyField>() {
-                        override fun onSuccess(response: PaddyField) {
-                            paddyField = response
-                            updateLoading = false
-                            initUpdateForm()
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                            updateLoading = false
-                            Log.d("PaddyFieldViewModel", "Error: ${error.message}")
-                        }
-
-                    })
-            }
-        }
-    }
-
-    private fun loadPlants() {
-        viewModelScope.launch {
-            ApiEndpoint.resourceRepository.getPlant(
-                Params(
-                    pageNumber = 0,
-                    pageSize = 200,
-                    sort = Sort.DESC
-                ).toMap()
-            )
-                .enqueue(object : ApiCallback<Page<Plant>>() {
-                    override fun onSuccess(response: Page<Plant>) {
-                        plants = response
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        Log.d("PaddyFieldViewModel", "Error: ${error.message}")
-                    }
-                })
-        }
-
-    }
-
-
-    private fun loadPaddyFieldActivities(){
-        paddyField?.let {
-            viewModelScope.launch {
-                ApiEndpoint.paddyFieldRepository.getPaddyFieldActivities(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
-                        override fun onSuccess(response: List<ActivityPaddyField>) {
-                            paddyFieldActivities = response
-                            loading = false
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                            Log.d("PaddyFieldViewModel", "Error: ${error.message}")
-                        }
-                    })
-            }
-        }
-    }
-}

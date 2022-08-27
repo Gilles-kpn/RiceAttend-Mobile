@@ -28,7 +28,6 @@ class MainActivity : ComponentActivity() {
         SessionManager.context = WeakReference(this@MainActivity)
         SessionManager.load()
         setContent {
-            actionBar?.hide()
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_MODE_CHANGED);
             RiceAttendTheme {
                 // A surface container using the 'background' color from the theme

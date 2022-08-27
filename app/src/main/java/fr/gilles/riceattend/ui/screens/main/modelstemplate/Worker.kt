@@ -1,9 +1,6 @@
 package fr.gilles.riceattend.ui.screens.main.modelstemplate
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -23,16 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import fr.gilles.riceattend.services.api.ApiCallback
-import fr.gilles.riceattend.services.api.ApiEndpoint
-import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.app.SessionManager.Companion.context
-import fr.gilles.riceattend.services.entities.models.ActivityWorker
-import fr.gilles.riceattend.services.entities.models.Worker
-import fr.gilles.riceattend.ui.screens.main.fragments.WorkerFormViewModel
+import fr.gilles.riceattend.ui.viewmodel.WorkerVM
 import fr.gilles.riceattend.ui.widget.components.ActivityTile
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.LoadingCard
@@ -44,10 +33,10 @@ import java.time.Duration
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 @RequiresApi(Build.VERSION_CODES.O)
-fun WorkerModelScreen(
+fun WorkerPage(
     navHostController: NavHostController,
     snackbarHostState: SnackbarHostState,
-    viewModel: WorkerViewModel
+    viewModel: WorkerVM
 ) {
     val scope = rememberCoroutineScope()
     val modalBottomSheetState =
@@ -248,7 +237,7 @@ fun WorkerModelScreen(
                     }
                 },
                 title = "Modifier les informations",
-                workerFormViewModel = viewModel.workerFormViewModel,
+                workerFormVM = viewModel.workerFormVM,
                 buttonText = "Modifier",
                 isLoading = viewModel.updateLoading
             )
@@ -258,118 +247,3 @@ fun WorkerModelScreen(
     ) {}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-class WorkerViewModel(val code: String) : ViewModel() {
-    var loading by mutableStateOf(false)
-    var worker by mutableStateOf<Worker?>(null)
-    var workerActivities by mutableStateOf<List<ActivityWorker>>(listOf())
-    var workerFormViewModel by mutableStateOf(WorkerFormViewModel())
-    var updateLoading by mutableStateOf(false)
-
-    init {
-        getWorker()
-    }
-
-    fun openDialer() {
-        worker?.let {
-            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${it.phone}"))
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.get()?.startActivity(intent)
-        }
-    }
-
-    fun openMail() {
-        worker?.let {
-            val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${it.email}"))
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.get()?.startActivity(intent)
-        }
-    }
-
-    private fun getWorker() {
-        loading = true
-        viewModelScope.launch {
-            ApiEndpoint.workerRepository.get(code)
-                .enqueue(object : ApiCallback<Worker>() {
-                    override fun onSuccess(response: Worker) {
-                        worker = response
-                        loading = false
-                        initUpdateFormViewModel()
-                        loadWorkerActivities()
-                        Log.d("WorkerViewModel", "Worker: ${response}")
-
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        loading = false
-                        Log.d("WorkerViewModel", error.message)
-                    }
-
-                })
-        }
-    }
-
-    private fun initUpdateFormViewModel() {
-        worker?.let {
-            workerFormViewModel.firstNameState.value = it.firstName
-            workerFormViewModel.lastNameState.value = it.lastName
-            workerFormViewModel.phoneState.value = it.phone
-            workerFormViewModel.emailState.value = it.email
-            it.address.let { address ->
-                workerFormViewModel.addressCityState.value =
-                    if (address.city.isNullOrEmpty()) "" else address.city!!
-                workerFormViewModel.addressStreetState.value =
-                    if (address.street.isNullOrEmpty()) "" else address.street!!
-                workerFormViewModel.addressCountryState.value =
-                    if (address.country.isNullOrEmpty()) "" else address.country!!
-            }
-            workerFormViewModel.hourlyPayState.value = it.hourlyPay
-        }
-    }
-
-    fun updateWorker(onError: (String) -> Unit) {
-        updateLoading = true
-        viewModelScope.launch {
-            worker?.let {
-                ApiEndpoint.workerRepository.update(
-                    it.code,
-                    workerFormViewModel.toWorkerPayload()
-                ).enqueue(object : ApiCallback<Worker>() {
-                    override fun onSuccess(response: Worker) {
-                        worker = response
-                        updateLoading = false
-                        initUpdateFormViewModel()
-                    }
-
-                    override fun onError(error: ApiResponseError) {
-                        updateLoading = false
-                        Log.d("WorkerViewModel", error.message)
-                    }
-                })
-            }
-        }
-    }
-
-    private fun loadWorkerActivities() {
-        worker?.let {
-            loading = true
-            viewModelScope.launch {
-                ApiEndpoint.workerRepository.getWorkerActivities(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityWorker>>() {
-                        override fun onSuccess(response: List<ActivityWorker>) {
-                            workerActivities = response
-                            loading = false
-                            Log.d("WorkerViewModel", "Activities: ${response}")
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                            loading = false
-                            Log.d("WorkerViewModel", error.message)
-                        }
-
-                    })
-            }
-        }
-    }
-
-}

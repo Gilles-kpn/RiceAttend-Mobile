@@ -10,16 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.ui.formfields.TextFieldState
+import fr.gilles.riceattend.ui.viewmodel.SettingsVM
 import fr.gilles.riceattend.ui.widget.components.AppBar
-import fr.gilles.riceattend.ui.widget.components.DropDownSelect
 import fr.gilles.riceattend.ui.widget.components.InputDropDownSelect
 
 @Composable
 fun SettingsFragment(
     onMenuClick: () -> Unit = {},
-    viewModel:SettingsFragmentViewModel = remember { SettingsFragmentViewModel() }
+    viewModel: SettingsVM =  SettingsVM()
 ) {
     Column(modifier= Modifier
         .fillMaxSize()
@@ -90,15 +88,7 @@ fun SettingsFragment(
 
     }
 }
-class SettingsFragmentViewModel {
-    var isDarkMode by mutableStateOf(SessionManager.session.preferences["theme"] != "light")
-    var language by mutableStateOf(TextFieldState(
-        defaultValue = Language.FRENCH,
-        errorMessage = {""},
-        validator = {true}
-    ))
 
-}
 enum class Language(val value: String, val label: String) {
     FRENCH("French", "Français"),
     ENGLISH("English", "English")
