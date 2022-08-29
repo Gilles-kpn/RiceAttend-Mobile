@@ -14,7 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fr.gilles.riceattend.services.entities.models.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.gilles.riceattend.services.entities.models.ResourceType
 import fr.gilles.riceattend.ui.viewmodel.ResourcesVM
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 fun ResourcesFragment(
     onMenuClick: () -> Unit = {},
     scope: CoroutineScope = rememberCoroutineScope(),
-    viewModel: ResourcesVM = ResourcesVM()
+    viewModel: ResourcesVM = viewModel()
 ) {
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)

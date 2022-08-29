@@ -7,6 +7,7 @@ import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,6 +22,7 @@ import fr.gilles.riceattend.ui.screens.main.fragments.*
 import fr.gilles.riceattend.ui.screens.main.modelstemplate.*
 import fr.gilles.riceattend.ui.viewmodel.ActivityVM
 import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVM
+import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVMFactory
 import fr.gilles.riceattend.ui.viewmodel.WorkerVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -196,7 +198,7 @@ fun NavigationContent(
                     PaddyFieldPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = PaddyFieldVM(bundle["code"] as String),
+                        viewModel = viewModel(factory = PaddyFieldVMFactory(bundle["code"] as String)),
                     )
                 }
 
