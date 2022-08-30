@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fr.gilles.riceattend.services.entities.models.*
+import fr.gilles.riceattend.services.entities.models.ResourceType
 import fr.gilles.riceattend.ui.viewmodel.ResourcesVM
 import fr.gilles.riceattend.ui.widget.components.*
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 fun ResourcesFragment(
     onMenuClick: () -> Unit = {},
     scope: CoroutineScope = rememberCoroutineScope(),
-    viewModel: ResourcesVM = ResourcesVM()
+    resourcesVM: ResourcesVM = remember{ ResourcesVM() }
 ) {
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -63,7 +63,7 @@ fun ResourcesFragment(
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 InputWidget(
-                    state = viewModel.searchState,
+                    state = resourcesVM.searchState,
                     title = "Rechercher",
                     trailing = {
                         IconButton(onClick = {
@@ -87,35 +87,28 @@ fun ResourcesFragment(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            when (viewModel.loading) {
+            when (resourcesVM.loading) {
                 true -> {
                     LoadingCard()
                 }
                 false -> {
-                    when (viewModel.resources) {
-                        null -> {
-                            LoadingCard()
-                        }
-                        else -> {
-                            viewModel.resources?.let {
-                                if (it.empty == true)
-                                    Column(
-                                        modifier = Modifier.fillMaxSize(),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(text = "Aucune ressource trouvée")
-                                    }
-                                else {
-                                    Column(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        it.content.forEach { resource ->
-                                            ResourceTile(resource = resource, onClick = {})
-                                            Divider()
-                                        }
-                                    }
+                    resourcesVM.resources?.let {
+                        if (it.empty == true)
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = "Aucune ressource trouvée")
+                            }
+                        else {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                it.content.forEach { resource ->
+                                    ResourceTile(resource = resource, onClick = {})
+                                    Divider()
                                 }
                             }
                         }
@@ -148,25 +141,25 @@ fun ResourcesFragment(
                     Icon(Icons.Outlined.Agriculture, "Resource")
                     Text(text = "Creer une ressource")
                 }
-                InputWidget(state = viewModel.resourceFormVM.name, title = "Nom")
+                InputWidget(state = resourcesVM.resourceFormVM.name, title = "Nom")
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = viewModel.resourceFormVM.quantity,
+                            state = resourcesVM.resourceFormVM.quantity,
                             title = "Quantite",
                             icon = Icons.Outlined.Countertops
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = viewModel.resourceFormVM.price,
+                            state = resourcesVM.resourceFormVM.price,
                             title = "Prix Unitaire",
                             icon = Icons.Outlined.PriceChange
                         )
                     }
                 }
                 InputDropDownSelect(
-                    state = viewModel.resourceFormVM.type,
+                    state = resourcesVM.resourceFormVM.type,
                     list = types,
                     template = {
                         Text(text = it.name)
@@ -174,13 +167,13 @@ fun ResourcesFragment(
                     title = "Type de ressource"
                 )
                 Button(
-                    enabled = !viewModel.resourceFormVM.loading && (
-                            viewModel.resourceFormVM.name.isValid() &&
-                                    viewModel.resourceFormVM.quantity.isValid() &&
-                                    viewModel.resourceFormVM.type.isValid()
+                    enabled = !resourcesVM.resourceFormVM.loading && (
+                            resourcesVM.resourceFormVM.name.isValid() &&
+                                    resourcesVM.resourceFormVM.quantity.isValid() &&
+                                    resourcesVM.resourceFormVM.type.isValid()
                             ),
                     onClick = {
-                        viewModel.create({ created = true }, {
+                        resourcesVM.create({ created = true }, {
                             scope.launch {
 
                             }
@@ -191,7 +184,7 @@ fun ResourcesFragment(
                         .padding(10.dp)
                         .height(50.dp)
                 ) {
-                    if (viewModel.resourceFormVM.loading) {
+                    if (resourcesVM.resourceFormVM.loading) {
                         CircularProgressIndicator()
                     } else {
                         Text("Enregistrer", style = MaterialTheme.typography.button)

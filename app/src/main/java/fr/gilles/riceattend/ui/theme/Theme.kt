@@ -33,9 +33,7 @@ private val LightColorPalette = lightColors(
 fun RiceAttendTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     val colors = if (darkTheme) {
         DarkColorPalette
-    } else {
-        LightColorPalette
-    }
+    } else { LightColorPalette }
     MaterialTheme(
         colors = colors,
         typography = Typography,
