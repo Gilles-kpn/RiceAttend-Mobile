@@ -59,9 +59,7 @@ class ResourcesVM : ViewModel() {
             ApiEndpoint.resourceRepository.create(resourceFormVM.toResourcePayload())
                 .enqueue(object : ApiCallback<Resource>() {
                     override fun onSuccess(response: Resource) {
-                        resources?.let {
-                            it.content = it.content + response
-                        }
+                        resources?.let { it.content = it.content + response }
                         resourceFormVM.loading = false
                         onSuccess()
                     }
