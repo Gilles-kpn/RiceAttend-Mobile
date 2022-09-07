@@ -17,6 +17,9 @@ import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.app.SessionManager
 import fr.gilles.riceattend.services.entities.models.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -49,12 +52,12 @@ class ActivityVM(val code: String) : ViewModel() {
                     override fun onSuccess(response: Activity) {
                         activity = response
                         getActivityPaddyFields()
+                        loading = false
                     }
 
                     override fun onError(error: ApiResponseError) {
                         loading = false
                     }
-
                 })
         }
     }
@@ -105,13 +108,14 @@ class ActivityVM(val code: String) : ViewModel() {
                     .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
                         override fun onSuccess(response: List<ActivityPaddyField>) {
                             activityPaddyFields = response
-                            getActivityResources()
                         }
 
                         override fun onError(error: ApiResponseError) {
                         }
 
                     })
+            }.also {
+                getActivityResources()
             }
         }
 

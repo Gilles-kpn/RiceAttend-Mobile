@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import fr.gilles.riceattend.ui.navigation.Route
 import fr.gilles.riceattend.ui.viewmodel.PaddyFieldsVM
@@ -29,7 +30,7 @@ import kotlinx.coroutines.launch
 @RequiresApi(Build.VERSION_CODES.O)
 fun PaddyFieldsFragment(
     onMenuClick: () -> Unit = {},
-    viewModel: PaddyFieldsVM = PaddyFieldsVM(),
+    viewModel: PaddyFieldsVM = viewModel(),
     scope: CoroutineScope = rememberCoroutineScope(),
     navHostController: NavHostController,
     snackBarHostState: SnackbarHostState,

@@ -31,7 +31,6 @@ class PaddyFieldsVM : ViewModel() {
 
     init {
         loadPaddyField()
-        loadPlants()
     }
 
 
@@ -50,6 +49,8 @@ class PaddyFieldsVM : ViewModel() {
                         Log.d("PaddyFieldViewModel", "Error: ${error.message}")
                     }
                 })
+        }.also {
+            loadPlants()
         }
     }
 
