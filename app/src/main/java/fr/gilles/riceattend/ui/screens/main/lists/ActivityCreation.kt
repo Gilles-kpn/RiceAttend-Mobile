@@ -1,7 +1,9 @@
-package fr.gilles.riceattend.ui.screens.main.fragments
+package fr.gilles.riceattend.ui.screens.main.lists
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import fr.gilles.riceattend.R
 import fr.gilles.riceattend.services.entities.models.ActivityResourcePayload
@@ -32,7 +36,7 @@ import java.time.Instant
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ActivityCreationScreen(
-    viewModel: ActivityCreationVM = remember { ActivityCreationVM() },
+    viewModel: ActivityCreationVM = hiltViewModel(),
     onMenuClick: () -> Unit = {},
     navHostController: NavHostController
 ) {
@@ -46,11 +50,9 @@ fun ActivityCreationScreen(
     ) {
         AppBar(title = "Creation d'une activite", leftContent = {
             IconButton(onClick = onMenuClick) {
-                Icon(Icons.Outlined.ArrowBack, "Menu", tint = MaterialTheme.colors.background)
+                Icon(Icons.Outlined.ArrowBack, "Menu",)
             }
-        }, rightContent = {
-            IconButton(onClick = { }) {}
-        })
+        }, rightContent = {})
         Row(
             Modifier
                 .fillMaxWidth()
@@ -136,6 +138,22 @@ fun ActivityCreationScreen(
                         title = "Description de l'activité",
                         singleLine = false
                     )
+
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 10.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(
+                            BorderStroke(1.dp, Color.White.copy(alpha = .3f)),
+                            RoundedCornerShape(10.dp)
+                        ) ){
+                        InputDropDownSelect(state = viewModel.activityFormVM.type, list = listOf("Simple","Semence","Récolte"),
+                            template = {
+                                Text(text = it, modifier = Modifier.padding(10.dp))
+                            } ,
+                            title = "Type d'activité"
+                        )
+                    }
                     OutlinedTextField(
                         modifier = Modifier
                             .fillMaxWidth()

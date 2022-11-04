@@ -1,7 +1,5 @@
 package fr.gilles.riceattend.services.api
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
@@ -15,12 +13,11 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-@RequiresApi(Build.VERSION_CODES.O)
 class ApiService {
     companion object {
-        private const val baseUrl: String = "https://riceattend.herokuapp.com/"
+         private fun baseUrl(): String = "https://riceattend.herokuapp.com/"
 
-        private val gson: Gson by lazy {
+        val gson: Gson by lazy {
             val builder = GsonBuilder()
             builder.registerTypeAdapter(
                 Date::class.java,
@@ -28,7 +25,7 @@ class ApiService {
             builder.create()
         }
 
-        private val httpClient: OkHttpClient by lazy {
+        val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .addInterceptor(headerInterceptor)
                 .addInterceptor(logger)
@@ -55,9 +52,9 @@ class ApiService {
             }
         }
 
-        private val retrofit: Retrofit by lazy {
+         val retrofit: Retrofit by lazy {
             Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(baseUrl())
                 .client(httpClient)
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))

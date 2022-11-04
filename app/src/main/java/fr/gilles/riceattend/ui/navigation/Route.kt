@@ -1,5 +1,6 @@
 package fr.gilles.riceattend.ui.navigation
 
+import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.material.ScaffoldState
@@ -7,6 +8,7 @@ import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -14,16 +16,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import dagger.hilt.android.EntryPointAccessors
+import fr.gilles.riceattend.app.MainActivity
 import fr.gilles.riceattend.services.app.SessionManager
+import fr.gilles.riceattend.services.entities.models.ActivityPaddyFieldWithoutActivity
+import fr.gilles.riceattend.services.entities.models.ActivityWorkerWithoutActivity
 import fr.gilles.riceattend.ui.screens.auth.LoginScreen
 import fr.gilles.riceattend.ui.screens.auth.RegisterScreen
 import fr.gilles.riceattend.ui.screens.main.MainScreen
-import fr.gilles.riceattend.ui.screens.main.fragments.*
-import fr.gilles.riceattend.ui.screens.main.modelstemplate.*
+import fr.gilles.riceattend.ui.screens.main.details.ActivityPage
+import fr.gilles.riceattend.ui.screens.main.details.PaddyFieldPage
+import fr.gilles.riceattend.ui.screens.main.details.WorkerPage
+import fr.gilles.riceattend.ui.screens.main.lists.*
 import fr.gilles.riceattend.ui.viewmodel.ActivityVM
 import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVM
-import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVMFactory
 import fr.gilles.riceattend.ui.viewmodel.WorkerVM
+import fr.gilles.riceattend.ui.widget.components.AddPaddyFieldViewModel
+import fr.gilles.riceattend.ui.widget.components.AddWorkersViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -69,57 +78,17 @@ fun NavigationContent(
         navigation(startDestination = Route.DashboardRoute.path, route = Route.MainRoute.path) {
 
             composable(Route.DashboardRoute.path) {
-                MainScreen(
-                    nav = navHostController,
-                    snackbarHostState = snackbarHostState,
-                    content = {
-                        DashboardFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } }
-                        )
-                    },
-                    scaffoldState = scaffoldState
-                )
+                DashboardFragment(navHostController)
             }
+
             composable(Route.ResourcesRoute.path) {
-                MainScreen(
-                    nav = navHostController,
-                    snackbarHostState = snackbarHostState,
-                    content = {
-                        ResourcesFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } }
-                        )
-                    },
-                    scaffoldState = scaffoldState
-                )
+                ResourcesFragment(navHostController)
             }
             composable(Route.WorkersRoute.path) {
-                MainScreen(
-                    nav = navHostController,
-                    snackbarHostState = snackbarHostState,
-                    content = {
-                        WorkersFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } },
-                            snackbarHostState = snackbarHostState,
-                            navHostController = navHostController
-                        )
-                    },
-                    scaffoldState = scaffoldState
-                )
+                WorkersFragment(navHostController)
             }
             composable(Route.PaddyFieldsRoute.path) {
-
-                MainScreen(
-                    nav = navHostController,
-                    snackbarHostState = snackbarHostState,
-                    content = {
-                        PaddyFieldsFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } },
-                            snackBarHostState = snackbarHostState,
-                            navHostController = navHostController,
-                        )
-                    },
-                    scaffoldState = scaffoldState,
-                )
+                PaddyFieldsFragment(navHostController = navHostController)
             }
             composable(Route.SettingRoute.path) {
                 MainScreen(
@@ -149,20 +118,11 @@ fun NavigationContent(
             }
 
             composable(Route.ActivitiesRoute.path) {
-                MainScreen(
-                    nav = navHostController,
-                    snackbarHostState = snackbarHostState,
-                    content = {
-                        ActivitiesFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } },
-                            snackbarHostState = snackbarHostState,
-                            navHostController = navHostController,
-                        )
-                    },
-                    scaffoldState = scaffoldState
+                ActivitiesFragment(
+                    navHostController = navHostController,
                 )
             }
-            //path = Route.WorkerRoute.path with workerId String
+
             composable(
                 Route.WorkerRoute.path,
                 arguments = listOf(navArgument("code") { type = NavType.StringType })
@@ -171,7 +131,7 @@ fun NavigationContent(
                     WorkerPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = WorkerVM(bundle["code"] as String),
+                        viewModel = workerViewModel(bundle["code"] as String),
                     )
                 }
 
@@ -186,7 +146,7 @@ fun NavigationContent(
                         onMenuClick = { scope.launch { navHostController.popBackStack() } },
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = ActivityVM(bundle["code"] as String),
+                        viewModel = activityViewModel(bundle["code"] as String),
                     )
                 }
             }
@@ -198,8 +158,9 @@ fun NavigationContent(
                     PaddyFieldPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = viewModel(factory = PaddyFieldVMFactory(bundle["code"] as String)),
+                        viewModel = paddyFieldViewModel(code = bundle["code"] as String)
                     )
+
                 }
 
             }
@@ -211,4 +172,71 @@ fun NavigationContent(
             }
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun paddyFieldViewModel(code: String): PaddyFieldVM {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .paddyFieldVMFactory()
+    return viewModel(factory = PaddyFieldVM.provideFactory(factory, code))
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun activityViewModel(code: String): ActivityVM {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .activityVMFactory()
+    return viewModel(factory = ActivityVM.provideFactory(factory, code))
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun workerViewModel(code: String): WorkerVM {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .workerVMFactory()
+    return viewModel(factory = WorkerVM.provideFactory(factory, code))
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun addWorkerViewModel(
+    code: String,
+    alreadyExists: List<ActivityWorkerWithoutActivity>,
+    onAddWorker: (List<ActivityWorkerWithoutActivity>) -> Unit,
+): AddWorkersViewModel {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .addWorkerVMFactory()
+    return viewModel(
+        factory = AddWorkersViewModel.provideFactory(
+            factory,
+            alreadyExists = alreadyExists,
+            code = code,
+            onAddWorker = onAddWorker
+        )
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun addPaddyFieldViewModel(
+    code: String,
+    alreadyExists: List<ActivityPaddyFieldWithoutActivity>,
+    onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit
+): AddPaddyFieldViewModel {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .addPaddyFieldVMFactory()
+    return viewModel(
+        factory = AddPaddyFieldViewModel.provideFactory(
+            factory,
+            code,
+            alreadyExists,
+            onAddPaddyFields
+        )
+    )
 }

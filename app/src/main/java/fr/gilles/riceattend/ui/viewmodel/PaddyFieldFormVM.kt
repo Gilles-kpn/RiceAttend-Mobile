@@ -4,11 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import fr.gilles.riceattend.services.entities.models.PaddyFielPayLoad
+import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.services.entities.models.PaddyFieldPayLoad
 import fr.gilles.riceattend.services.entities.models.Plant
 import fr.gilles.riceattend.services.entities.models.Surface
 import fr.gilles.riceattend.ui.formfields.TextFieldState
-
+@HiltViewModel
 class PaddyFieldFormVM : ViewModel() {
     var name by mutableStateOf(
         TextFieldState(
@@ -58,8 +59,8 @@ class PaddyFieldFormVM : ViewModel() {
     )
 
 
-    fun toPaddyFieldPayload(): PaddyFielPayLoad {
-        return PaddyFielPayLoad(
+    fun toPaddyFieldPayload(): PaddyFieldPayLoad {
+        return PaddyFieldPayLoad(
             name = name.value,
             description = description.value,
             plantCode = plant.value.code,

@@ -21,10 +21,8 @@ fun ShowDatePicker(
     val mHour: Int
     val mMinute: Int
 
-    // Initializing a Calendar
     val calendar = Calendar.getInstance()
 
-    // Fetching current year, month and day
     year = calendar.get(Calendar.YEAR)
     month = calendar.get(Calendar.MONTH)
     day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -59,10 +57,10 @@ fun ShowDatePicker(
     val datePicker = DatePickerDialog(
         context,
         { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-            //convert mDayMonth and mMont to 2 digits
-            val pickerMonth = if (mMonth < 10) "0${mMonth + 1}" else mMonth.toString()
+            val pickerMonth = mMonth + 1
+            val month = if (pickerMonth < 10) "0$pickerMonth" else pickerMonth.toString()
             val pickerDay = if (mDayOfMonth < 10) "0$mDayOfMonth" else mDayOfMonth.toString()
-            date = "$pickerDay/${pickerMonth}/$mYear"
+            date = "$pickerDay/${month}/$mYear"
             timePicker.show()
         }, year, month, day
     )

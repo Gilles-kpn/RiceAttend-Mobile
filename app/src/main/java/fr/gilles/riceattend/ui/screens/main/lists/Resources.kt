@@ -1,8 +1,7 @@
-package fr.gilles.riceattend.ui.screens.main.fragments
+package fr.gilles.riceattend.ui.screens.main.lists
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -14,110 +13,97 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import fr.gilles.riceattend.services.entities.models.ResourceType
+import fr.gilles.riceattend.ui.screens.main.Drawer
 import fr.gilles.riceattend.ui.viewmodel.ResourcesVM
 import fr.gilles.riceattend.ui.widget.components.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 @Preview(showBackground = true)
-@RequiresApi(Build.VERSION_CODES.O)
 fun ResourcesFragment(
-    onMenuClick: () -> Unit = {},
-    scope: CoroutineScope = rememberCoroutineScope(),
-    viewModel: ResourcesVM = viewModel()
+    navHostController: NavHostController = rememberNavController(),
+    viewModel: ResourcesVM = hiltViewModel()
 ) {
     val modalBottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val scope = rememberCoroutineScope()
     var created by remember { mutableStateOf(false) }
-    if (created) OpenDialog(title = "Ajouter une ressources",
-        onDismiss = { created = false },
-        onConfirm = { created = false; },
-        show = created,
-        content = { Text(text = "Nouvelle ressource enregistre avec success") })
+    val scaffoldState = rememberScaffoldState()
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        AppBar(title = "Ressources", leftContent = {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Outlined.Menu, "Menu", tint = MaterialTheme.colors.background)
-            }
-        }, rightContent = {
-            IconButton(onClick = { scope.launch { modalBottomSheetState.show() } }) {
-                Icon(
-                    Icons.Outlined.Add,
-                    "More",
-                    tint = MaterialTheme.colors.background
-                )
-            }
-        })
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                InputWidget(
-                    state = resourcesVM.searchState,
-                    title = "Rechercher",
-                    trailing = {
-                        IconButton(onClick = {
-                        }) {
-                            Icon(Icons.Outlined.Search, "Rechercher")
+    Scaffold(
+        scaffoldState = scaffoldState,
+        drawerContent = { Drawer(navHostController, scope, scaffoldState) },
+        topBar = {
+            AppBar(title = "Resources",
+                leftContent = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            scaffoldState.drawerState.open()
                         }
-                    },
-                    roundedCornerShape = RoundedCornerShape(30.dp)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Outlined.FilterList, "Filtrer")
-                    Text("Filtrer", modifier = Modifier.padding(10.dp))
-                }
-            }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            when (resourcesVM.loading) {
+                    }) {
+                        Icon(Icons.Outlined.Menu, "Menu", )
+                    }
+                }, rightContent = {
+                    IconButton(onClick = {  }) {
+                        Icon(Icons.Outlined.FilterList, "Add", )
+                    }
+                })
+        },
+        drawerGesturesEnabled = true,
+        content = { padding->
+            if (created) OpenDialog(title = "Ajouter une ressources",
+                onDismiss = { created = false },
+                onConfirm = { created = false; },
+                show = created,
+                content = { Text(text = "Nouvelle ressource enregistre avec success") }, isSuccess = true)
+            when (viewModel.loading) {
                 true -> {
                     LoadingCard()
                 }
                 false -> {
-                    resourcesVM.resources?.let {
+                    viewModel.resources?.let {
                         if (it.empty == true)
                             Column(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier.fillMaxSize().padding(padding),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(text = "Aucune ressource trouvée")
                             }
                         else {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 10.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                it.content.forEach { resource ->
-                                    ResourceTile(resource = resource, onClick = {})
-                                    Divider()
+                                items(it.content.size){index ->
+                                    ResourceTile(resource = it.content[index], onClick = {})
                                 }
                             }
                         }
                     }
                 }
             }
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+              scope.launch {
+                  modalBottomSheetState.show()
+              }
+            }) {
+                Icon(Icons.Outlined.Add, "Add")
+            }
         }
-    }
+    )
+
+
     ModalBottomSheetLayout(
         sheetContent = {
             Column(
@@ -142,39 +128,41 @@ fun ResourcesFragment(
                     Icon(Icons.Outlined.Agriculture, "Resource")
                     Text(text = "Creer une ressource")
                 }
-                InputWidget(state = resourcesVM.resourceFormVM.name, title = "Nom")
+                InputWidget(state = viewModel.resourceFormVM.name, title = "Nom")
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = resourcesVM.resourceFormVM.quantity,
+                            state = viewModel.resourceFormVM.quantity,
                             title = "Quantite",
                             icon = Icons.Outlined.Countertops
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         InputNumberWidget(
-                            state = resourcesVM.resourceFormVM.price,
+                            state = viewModel.resourceFormVM.price,
                             title = "Prix Unitaire",
                             icon = Icons.Outlined.PriceChange
                         )
                     }
                 }
-                InputDropDownSelect(
-                    state = resourcesVM.resourceFormVM.type,
-                    list = types,
-                    template = {
-                        Text(text = it.name)
-                    },
-                    title = "Type de ressource"
-                )
+               Box(Modifier.fillMaxWidth()) {
+                   InputDropDownSelect(
+                       state = viewModel.resourceFormVM.type,
+                       list = types,
+                       template = {
+                           Text(text = it.label, modifier = Modifier.padding(10.dp))
+                       },
+                       title = "Type de ressource"
+                   )
+               }
                 Button(
-                    enabled = !resourcesVM.resourceFormVM.loading && (
-                            resourcesVM.resourceFormVM.name.isValid() &&
-                                    resourcesVM.resourceFormVM.quantity.isValid() &&
-                                    resourcesVM.resourceFormVM.type.isValid()
+                    enabled = !viewModel.resourceFormVM.loading && (
+                            viewModel.resourceFormVM.name.isValid() &&
+                                    viewModel.resourceFormVM.quantity.isValid() &&
+                                    viewModel.resourceFormVM.type.isValid()
                             ),
                     onClick = {
-                        resourcesVM.create({ created = true }, {
+                        viewModel.create({ created = true }, {
                             scope.launch {
 
                             }
@@ -185,7 +173,7 @@ fun ResourcesFragment(
                         .padding(10.dp)
                         .height(50.dp)
                 ) {
-                    if (resourcesVM.resourceFormVM.loading) {
+                    if (viewModel.resourceFormVM.loading) {
                         CircularProgressIndicator()
                     } else {
                         Text("Enregistrer", style = MaterialTheme.typography.button)

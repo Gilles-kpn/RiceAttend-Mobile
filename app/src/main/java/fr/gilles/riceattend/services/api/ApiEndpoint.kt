@@ -1,17 +1,16 @@
 package fr.gilles.riceattend.services.api
 
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import fr.gilles.riceattend.services.repositories.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
-@RequiresApi(Build.VERSION_CODES.O)
-class ApiEndpoint {
-    companion object {
-        val authRepository = ApiService.buildRepository(AuthRepository::class.java)
-        val workerRepository = ApiService.buildRepository(WorkerRepository::class.java)
-        val resourceRepository = ApiService.buildRepository(ResourceRepository::class.java)
-        val paddyFieldRepository = ApiService.buildRepository(PaddyFieldRepository::class.java)
-        val activityRepository = ApiService.buildRepository(ActivityRepository::class.java)
-    }
-}
+@Singleton
+class ApiEndpoint @Inject constructor(
+    val authRepository: AuthRepository = ApiService.retrofit.create(AuthRepository::class.java),
+    val workerRepository: WorkerRepository = ApiService.retrofit.create(WorkerRepository::class.java),
+    val resourceRepository: ResourceRepository = ApiService.retrofit.create(ResourceRepository::class.java),
+    val paddyFieldRepository: PaddyFieldRepository = ApiService.retrofit.create(PaddyFieldRepository::class.java),
+    val activityRepository: ActivityRepository = ApiService.retrofit.create(ActivityRepository::class.java),
+    val statisticsRepository: StatisticsRepository = ApiService.retrofit.create(StatisticsRepository::class.java),
+)

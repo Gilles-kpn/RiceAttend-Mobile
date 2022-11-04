@@ -14,7 +14,7 @@ data class Page<T>(
     @SerializedName("size") val size: Int?,
     @SerializedName("content") var content: List<T>,
     @SerializedName("empty") val empty: Boolean?
-) {
+) : Iterable<T> {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -49,6 +49,10 @@ data class Page<T>(
         result = 31 * result + content.hashCode()
         result = 31 * result + (empty?.hashCode() ?: 0)
         return result
+    }
+
+    override fun iterator(): Iterator<T> {
+        return this.content.iterator()
     }
 }
 

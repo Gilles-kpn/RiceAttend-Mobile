@@ -1,16 +1,14 @@
 package fr.gilles.riceattend.services.app
 
 import android.content.Context
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import fr.gilles.riceattend.services.entities.models.User
-import fr.gilles.riceattend.ui.screens.main.fragments.Language
+import fr.gilles.riceattend.ui.screens.main.lists.Language
 import java.lang.ref.WeakReference
-import java.util.prefs.Preferences
 
 
 data class Session(

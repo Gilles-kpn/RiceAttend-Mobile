@@ -20,12 +20,12 @@ val Typography = Typography(
     h1 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Bold,
-        fontSize = 20.sp
+        fontSize = 16.sp
     ),
     body1 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
+        fontSize = 12.sp
     )
     /* Other default text styles to override
     button = TextStyle(

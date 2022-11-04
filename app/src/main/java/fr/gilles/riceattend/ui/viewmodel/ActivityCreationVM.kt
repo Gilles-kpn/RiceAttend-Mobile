@@ -7,14 +7,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
-class ActivityCreationVM : ViewModel() {
+@HiltViewModel
+class ActivityCreationVM @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+) : ViewModel() {
     val activityFormVM by mutableStateOf(ActivityFormVM())
     var paddyFields by mutableStateOf<Page<PaddyField>?>(null)
     var workers by mutableStateOf<Page<Worker>?>(null)
@@ -31,7 +36,7 @@ class ActivityCreationVM : ViewModel() {
 
     fun loadPaddyField() {
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(Params(0, 100).toMap())
+            apiEndpoint.paddyFieldRepository.get(Params(0, 100).toMap())
                 .enqueue(object : ApiCallback<Page<PaddyField>>() {
                     override fun onSuccess(response: Page<PaddyField>) {
                         paddyFields = response
@@ -46,7 +51,7 @@ class ActivityCreationVM : ViewModel() {
 
     fun loadWorkers() {
         viewModelScope.launch {
-            ApiEndpoint.workerRepository.get(Params(0, 100).toMap())
+            apiEndpoint.workerRepository.get(Params(0, 100).toMap())
                 .enqueue(object : ApiCallback<Page<Worker>>() {
                     override fun onSuccess(response: Page<Worker>) {
                         workers = response
@@ -61,7 +66,7 @@ class ActivityCreationVM : ViewModel() {
 
     fun loadResources() {
         viewModelScope.launch {
-            ApiEndpoint.resourceRepository.get(Params(0, 100).toMap())
+            apiEndpoint.resourceRepository.get(Params(0, 100).toMap())
                 .enqueue(object : ApiCallback<Page<Resource>>() {
                     override fun onSuccess(response: Page<Resource>) {
                         resources = response
@@ -78,7 +83,7 @@ class ActivityCreationVM : ViewModel() {
     fun createActivity() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.create(activityFormVM.toActivityPayload())
+            apiEndpoint.activityRepository.create(activityFormVM.toActivityPayload())
                 .enqueue(object : ApiCallback<Activity>() {
                     override fun onSuccess(response: Activity) {
                         createdActivity = response

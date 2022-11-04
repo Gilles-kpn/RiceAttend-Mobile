@@ -7,7 +7,7 @@ data class Params(
     @SerializedName("pageSize") var pageSize: Int = 12,
     @SerializedName("sort") var sort: Sort = Sort.DESC,
     @SerializedName("deleted") var deleted: Boolean = false,
-    @SerializedName("fields") var fields: List<String> = listOf("code")
+    @SerializedName("fields") var fields: List<String> = listOf("createdAt")
 
 ) {
 

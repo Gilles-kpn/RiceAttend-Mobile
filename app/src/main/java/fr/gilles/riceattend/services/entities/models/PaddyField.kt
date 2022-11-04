@@ -11,13 +11,23 @@ data class PaddyField(
 ) : Audit()
 
 
+data class PaddyFieldDetails(
+    @SerializedName("name") var name: String,
+    @SerializedName("surface") var surface: Surface,
+    @SerializedName("description") var description: String?,
+    @SerializedName("numberOfPlants") var numberOfPlants: Int,
+    @SerializedName("plant") var plant: Plant,
+    @SerializedName("activityPaddyFields") var activityPaddyFields: List<ActivityPaddyFieldWithoutPaddyField>,
+) : Audit()
+
+
 data class Surface(
     @SerializedName("unit") var unit: String,
     @SerializedName("value") var value: Long
 )
 
 
-data class PaddyFielPayLoad(
+data class PaddyFieldPayLoad(
     @SerializedName("name") var name: String,
     @SerializedName("surface") var surface: Surface,
     @SerializedName("description") var description: String?,

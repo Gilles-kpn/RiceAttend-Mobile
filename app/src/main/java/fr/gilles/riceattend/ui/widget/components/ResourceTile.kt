@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Build
@@ -17,7 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fr.gilles.riceattend.services.entities.models.Resource
 import fr.gilles.riceattend.services.entities.models.ResourceType
 
@@ -26,31 +28,52 @@ fun ResourceTile(
     resource: Resource,
     onClick: () -> Unit = {}
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .clickable { onClick() }, verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 5.dp)
+            .clip(RoundedCornerShape(5.dp))
+            .clickable { onClick() },
+        elevation = 8.dp
     ) {
-        when (resource.resourceType) {
-            ResourceType.WATER -> {
-                Icon(Icons.Outlined.Water, "Water", Modifier.padding(horizontal = 20.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(10.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+            when (resource.resourceType) {
+                ResourceType.WATER -> {
+                    Icon(Icons.Outlined.Water, "Water", Modifier.padding(horizontal = 20.dp))
+                }
+                ResourceType.MATERIALS -> {
+                    Icon(Icons.Outlined.Build, "Materials", Modifier.padding(horizontal = 20.dp))
+                }
+                ResourceType.OTHER -> {
+                    Icon(Icons.Outlined.Build, "Other", Modifier.padding(horizontal = 20.dp))
+                }
+                ResourceType.FERTILIZER -> {
+                    Icon(Icons.Outlined.Spa, "Fertilizer", Modifier.padding(horizontal = 20.dp))
+                }
             }
-            ResourceType.MATERIALS -> {
-                Icon(Icons.Outlined.Build, "Materials", Modifier.padding(horizontal = 20.dp))
+            Column {
+                Text(
+                    resource.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 5.dp)
+                )
+                Text(
+                    "Quantité Restante: ${resource.quantity}",
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    fontSize = 12.sp
+                )
+                Text(
+                    "Prix Unitaire: ${resource.unitPrice}",
+                    modifier = Modifier.padding(vertical = 3.dp),
+                    fontSize = 12.sp
+                )
             }
-            ResourceType.OTHER -> {
-                Icon(Icons.Outlined.Build, "Other", Modifier.padding(horizontal = 20.dp))
-            }
-            ResourceType.FERTILIZER -> {
-                Icon(Icons.Outlined.Spa, "Fertilizer", Modifier.padding(horizontal = 20.dp))
-            }
-        }
-        Column {
-            Text(resource.name, style = MaterialTheme.typography.h1)
-            Text("Quantité Restante: ${resource.quantity}")
-            Text("Prix Unitaire: ${resource.unitPrice}")
         }
     }
 }

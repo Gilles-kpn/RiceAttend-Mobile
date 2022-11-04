@@ -36,7 +36,6 @@ fun MainScreen(
     content: @Composable () -> Unit,
     floatingActionButton: @Composable () -> Unit = {},
 ) {
-
     Scaffold(
         scaffoldState = scaffoldState,
         drawerContent = {
@@ -51,11 +50,13 @@ fun MainScreen(
 }
 
 @Composable
-fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldState) {
+fun Drawer(nav: NavController,
+           scope: CoroutineScope,
+           scaffoldState: ScaffoldState
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -125,7 +126,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                     mapOf(
                         "route" to Route.ResourcesRoute.path,
                         "title" to "Ressources",
-                        "icon" to Icons.Outlined.CheckBox
+                        "icon" to Icons.Outlined.Build
                     ),
                     mapOf(
                         "route" to Route.WorkersRoute.path,
@@ -140,9 +141,9 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(6.dp)
+                        .padding(horizontal = 6.dp, vertical = 3.dp )
                         .height(50.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(3.dp))
                         .clickable {
 
                             scope.launch { scaffoldState.drawerState.close() }
@@ -164,7 +165,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                             ),
                             tint = frontColor
                         )
-                        Text(text = it["title"].toString(), fontSize = 16.sp, color = frontColor)
+                        Text(text = it["title"].toString(), color = frontColor)
                     } else {
                         Icon(
                             it["icon"] as ImageVector,
@@ -176,7 +177,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                                 bottom = 8.dp
                             ),
                         )
-                        Text(text = it["title"].toString(), fontSize = 16.sp)
+                        Text(text = it["title"].toString())
                     }
 
                 }
@@ -212,7 +213,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                         bottom = 8.dp
                     )
                 )
-                Text(text = "Parametres", fontSize = 16.sp)
+                Text(text = "Parametres")
             }
             Row(
                 modifier = Modifier
@@ -240,7 +241,7 @@ fun Drawer(nav: NavController, scope: CoroutineScope, scaffoldState: ScaffoldSta
                         bottom = 8.dp
                     )
                 )
-                Text(text = "Deconnexion", fontSize = 16.sp)
+                Text(text = "Deconnexion")
             }
         }
     }

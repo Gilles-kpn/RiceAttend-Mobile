@@ -22,8 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -31,15 +33,14 @@ import fr.gilles.riceattend.services.entities.models.RegisterUser
 import fr.gilles.riceattend.ui.formfields.EmailFieldState
 import fr.gilles.riceattend.ui.formfields.PasswordFieldState
 import fr.gilles.riceattend.ui.formfields.TextFieldState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @Composable
 @Preview
 @RequiresApi(Build.VERSION_CODES.O)
 fun RegisterForm(
-    viewModel: RegisterFormViewModel = RegisterFormViewModel() ,
+    viewModel: RegisterFormViewModel = hiltViewModel() ,
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}
@@ -235,8 +236,11 @@ fun RegisterForm(
     }
 }
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class RegisterFormViewModel: ViewModel() {
+class RegisterFormViewModel @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+)  : ViewModel() {
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
     var passwordVisible by mutableStateOf(false)
@@ -257,7 +261,7 @@ class RegisterFormViewModel: ViewModel() {
     fun register(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             loading = true
-            ApiEndpoint.authRepository.register(
+            apiEndpoint.authRepository.register(
                 RegisterUser(
                     email = emailState.value,
                     password = passwordState.value,

@@ -37,21 +37,17 @@ fun <T> InputDropDownSelect(
     ) {
         Text(text = title, style = MaterialTheme.typography.body1)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.padding(12.dp).fillMaxWidth().clickable { expanded.value = true  },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
                     .weight(9f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        expanded.value = true
-                    }) { template(list[defaultSelectedIndex.value]) }
+                    .clip(RoundedCornerShape(10.dp)))
+            { template(list[defaultSelectedIndex.value]) }
             Box(modifier = Modifier.weight(1f)) {
-                IconButton(onClick = { expanded.value = true }) {
-                    Icon(Icons.Outlined.ArrowDropDown, "Dropdown")
-                }
+                Icon(Icons.Outlined.ArrowDropDown, "Dropdown")
             }
         }
     }
@@ -67,11 +63,10 @@ fun <T> InputDropDownSelect(
                 state.validate()
                 expanded.value = false
             },
-            expanded = expanded.value,
-            onDismiss = {
-                expanded.value = false
-            }
-        )
+            expanded = expanded.value
+        ) {
+            expanded.value = false
+        }
     state.error?.let {
         ErrorText(text = it)
     }
@@ -90,6 +85,7 @@ fun <T> DropDownSelect(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
+        modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
         properties = PopupProperties(focusable = true)
     ) {
         list.forEachIndexed { index, item ->

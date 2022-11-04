@@ -11,15 +11,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.services.entities.models.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import fr.gilles.riceattend.services.entities.models.ActivityPaddyField
+import fr.gilles.riceattend.services.entities.models.ActivityStatus
+import fr.gilles.riceattend.services.entities.models.ActivityWithDetails
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -27,16 +31,13 @@ import retrofit2.Response
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.O)
-class ActivityVM(val code: String) : ViewModel() {
-    var activity by mutableStateOf<Activity?>(null)
+@HiltViewModel
+class ActivityVM @AssistedInject constructor(
+    @Assisted val code: String,
+    private val apiEndpoint: ApiEndpoint
+    ) : ViewModel() {
+    var activity by mutableStateOf<ActivityWithDetails?>(null)
     var loading by mutableStateOf(false)
-    var activityResources by mutableStateOf<List<ActivityResource>>(listOf())
-    var activityWorkers by mutableStateOf<List<ActivityWorker>>(listOf())
-    var activityPaddyFields by mutableStateOf<List<ActivityPaddyField>>(listOf())
-
-    var selectedActivityResources by mutableStateOf<List<ActivityResource>>(listOf())
-    var selectedActivityWorkers by mutableStateOf<List<ActivityWorker>>(listOf())
-    var selectedActivityPaddyFields by mutableStateOf<List<ActivityPaddyField>>(listOf())
 
     init {
         loadActivity()
@@ -47,11 +48,10 @@ class ActivityVM(val code: String) : ViewModel() {
         loading = true
         Log.d("Launch one time scope", "1 launch")
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.get(code)
-                .enqueue(object : ApiCallback<Activity>() {
-                    override fun onSuccess(response: Activity) {
+            apiEndpoint.activityRepository.get(code)
+                .enqueue(object : ApiCallback<ActivityWithDetails>() {
+                    override fun onSuccess(response: ActivityWithDetails) {
                         activity = response
-                        getActivityPaddyFields()
                         loading = false
                     }
 
@@ -62,68 +62,10 @@ class ActivityVM(val code: String) : ViewModel() {
         }
     }
 
-    private fun getActivityResources() {
-        activity?.let {
-            viewModelScope.launch {
-                ApiEndpoint.activityRepository.getActivityResources(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityResource>>() {
-                        override fun onSuccess(response: List<ActivityResource>) {
-                            activityResources = response
-                            getActivityWorkers()
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                        }
-
-                    })
-            }
-        }
-
-    }
-
-    private fun getActivityWorkers() {
-        activity?.let {
-            viewModelScope.launch {
-                ApiEndpoint.activityRepository.getActivityWorkers(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityWorker>>() {
-                        override fun onSuccess(response: List<ActivityWorker>) {
-                            activityWorkers = response
-                            loading = false
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                        }
-
-                    })
-            }
-        }
-
-    }
-
-
-    private fun getActivityPaddyFields() {
-        activity?.let {
-            viewModelScope.launch {
-                ApiEndpoint.activityRepository.getActivityPaddyFields(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
-                        override fun onSuccess(response: List<ActivityPaddyField>) {
-                            activityPaddyFields = response
-                        }
-
-                        override fun onError(error: ApiResponseError) {
-                        }
-
-                    })
-            }.also {
-                getActivityResources()
-            }
-        }
-
-    }
 
     fun markAsDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.doneActivity(activity!!.code)
+            apiEndpoint.activityRepository.doneActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful)
@@ -141,12 +83,12 @@ class ActivityVM(val code: String) : ViewModel() {
 
     fun markAsUnDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.undoneActivity(activity!!.code)
+            apiEndpoint.activityRepository.undoneActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
                             activity!!.status = ActivityStatus.UNDONE
-                            activityPaddyFields.forEach {
+                            activity!!.activityPaddyFields.forEach {
                                 it.status = ActivityStatus.UNDONE
                             }
                             onSuccess()
@@ -163,12 +105,12 @@ class ActivityVM(val code: String) : ViewModel() {
 
     fun markAsStarted(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.startedActivity(activity!!.code)
+            apiEndpoint.activityRepository.startedActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
                             activity!!.status = ActivityStatus.IN_PROGRESS
-                            activityPaddyFields.forEach {
+                            activity!!.activityPaddyFields.forEach {
                                 it.status = ActivityStatus.IN_PROGRESS
                             }
                             onSuccess()
@@ -185,13 +127,13 @@ class ActivityVM(val code: String) : ViewModel() {
 
     fun cancelActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.cancelActivity(activity!!.code)
+            apiEndpoint.activityRepository.cancelActivity(activity!!.code)
                 .enqueue(object : Callback<Void> {
 
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
                             activity!!.status = ActivityStatus.INIT
-                            activityPaddyFields.forEach {
+                            activity!!.activityPaddyFields.forEach {
                                 it.status = ActivityStatus.INIT
                             }
                             onSuccess()
@@ -207,7 +149,7 @@ class ActivityVM(val code: String) : ViewModel() {
 
     fun deleteActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.delete(activity!!.code)
+            apiEndpoint.activityRepository.delete(activity!!.code)
                 .enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
@@ -250,42 +192,109 @@ class ActivityVM(val code: String) : ViewModel() {
         }
     }
 
-    fun removeActivityPaddyFieldFromActivity(activityPaddyField: ActivityPaddyField){
+    fun removeActivityPaddyFieldFromActivity(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {},onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.deletePaddyFieldFromActivity(
+            apiEndpoint.activityRepository.deletePaddyFieldFromActivity(
                 activity!!.code,
                 activityPaddyField.code
-            )
+            ).enqueue(object : Callback<Any> {
+                override fun onResponse(call: Call<Any>, response: Response<Any>) {
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    }else onError()
+
+                    onFinish()
+                }
+
+                override fun onFailure(call: Call<Any>, t: Throwable) {
+                    onError()
+                }
+            })
         }
     }
 
-    fun startActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+    fun startActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.startedPaddyField(
+            apiEndpoint.activityRepository.startedPaddyField(
                 activity!!.code,
                 activityPaddyField.code
-            )
+            ).enqueue(object : Callback<Any> {
+                override fun onResponse(call: Call<Any>, response: Response<Any>) {
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    }else onError()
+
+                    onFinish()
+                }
+
+                override fun onFailure(call: Call<Any>, t: Throwable) {
+                    onError()
+                }
+            })
         }
     }
 
-    fun undoneActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+    fun undoneActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.undonePaddyField(
+            apiEndpoint.activityRepository.undonePaddyField(
                 activity!!.code,
                 activityPaddyField.code
-            )
+            ).enqueue(object : Callback<Any> {
+                override fun onResponse(call: Call<Any>, response: Response<Any>) {
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    }else onError()
+
+                    onFinish()
+                }
+
+                override fun onFailure(call: Call<Any>, t: Throwable) {
+                    onError()
+                }
+            })
         }
     }
 
-    fun doneActivityOnPaddyField(activityPaddyField: ActivityPaddyField){
+    fun doneActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.donePaddyField(
+            apiEndpoint.activityRepository.donePaddyField(
                 activity!!.code,
                 activityPaddyField.code
-            )
+            ).enqueue(object : Callback<Any> {
+                override fun onResponse(call: Call<Any>, response: Response<Any>) {
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    }else onError()
+
+                    onFinish()
+                }
+
+                override fun onFailure(call: Call<Any>, t: Throwable) {
+                   onError()
+                }
+            })
         }
     }
 
 
 
+    @AssistedFactory
+    interface Factory{
+        fun create(code: String): PaddyFieldVM
+    }
+
+
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideFactory(
+            activityVMFactory: Factory,
+            code: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return activityVMFactory.create(code) as T
+            }
+        }
+    }
 }

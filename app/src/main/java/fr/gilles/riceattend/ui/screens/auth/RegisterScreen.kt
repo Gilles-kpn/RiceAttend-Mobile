@@ -16,10 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import fr.gilles.riceattend.R
 import fr.gilles.riceattend.ui.navigation.Route
 import fr.gilles.riceattend.ui.widget.RegisterForm
-import fr.gilles.riceattend.ui.widget.components.IncludeLottieFile
 import fr.gilles.riceattend.ui.widget.components.OpenDialog
 import kotlinx.coroutines.launch
 
@@ -27,75 +25,67 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(nav: NavController, snackbarHostState: SnackbarHostState) {
     val scope = rememberCoroutineScope()
+    var alert by remember { mutableStateOf(false) }
+    OpenDialog(
+        title = "Enregistrement",
+        content = {
+            Text(
+                "Votre compte a été enregistré avec succes, Un email vous a été envoyé pour activer votre compte\nVeuillez vérifier votre boîte mail",
+                style = MaterialTheme.typography.subtitle1,
+                modifier = Modifier.padding(10.dp)
+            )
+        },
+        onConfirm = {
+            nav.navigate(Route.LoginRoute.path) {
+                popUpTo(Route.RegisterRoute.path) {
+                    inclusive = true
+                }
+            }
+        },
+        onDismiss = {
+            nav.navigate(Route.LoginRoute.path) {
+                popUpTo(Route.RegisterRoute.path) {
+                    inclusive = true
+                }
+            }
+        },
+        show = alert,
+        isSuccess = true
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Bottom
     ) {
-        var alert by remember { mutableStateOf(false) }
-        OpenDialog(
-            title = "Enregistrement",
-            content = {
+        RegisterForm(
+            additional = {
                 Text(
-                    "Votre compte a été enregistré avec succes, Un email vous a été envoyé pour activer votre compte\nVeuillez vérifier votre boîte mail",
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(10.dp)
-                )
-            },
-            onConfirm = {
-                nav.navigate(Route.LoginRoute.path) {
-                    popUpTo(Route.RegisterRoute.path) {
-                        inclusive = true
-                    }
-                }
-            },
-            onDismiss = {
-                nav.navigate(Route.LoginRoute.path) {
-                    popUpTo(Route.RegisterRoute.path) {
-                        inclusive = true
-                    }
-                }
-            },
-            show = alert,
-            isSuccess = true
-        )
-        IncludeLottieFile(draw = R.raw.register, modifier = Modifier
-            .padding(horizontal = 20.dp)
-            .weight(.5f) )
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)) {
-            RegisterForm(
-                additional = {
-                    Text(
-                        "Deja enregistre? Se connecter",
-                        modifier = Modifier
-                            .clickable {
-                                nav.navigate(Route.LoginRoute.path) {
-                                    popUpTo(Route.RegisterRoute.path) {
-                                        inclusive = true
-                                    }
+                    "Deja enregistre? Se connecter",
+                    modifier = Modifier
+                        .clickable {
+                            nav.navigate(Route.LoginRoute.path) {
+                                popUpTo(Route.RegisterRoute.path) {
+                                    inclusive = true
                                 }
                             }
-                            .padding(10.dp)
-                            .fillMaxWidth()
-                            .clip(CircleShape),
+                        }
+                        .padding(10.dp)
+                        .fillMaxWidth()
+                        .clip(CircleShape),
 
-                        )
-                },
-                onError = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(it)
-                    }
-                },
-                onSuccess = {
-                    alert = true
-                },
-            )
-        }
+                    )
+            },
+            onError = {
+                scope.launch {
+                    snackbarHostState.showSnackbar(it)
+                }
+            },
+            onSuccess = {
+                alert = true
+            },
+        )
 
     }
 }

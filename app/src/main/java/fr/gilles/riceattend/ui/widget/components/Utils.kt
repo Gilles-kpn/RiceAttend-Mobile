@@ -16,3 +16,10 @@ fun parseDateFromString(value: String): LocalDateTime? {
 fun formatDateToHumanReadable(date: Date): String {
     return SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault()).format(date)
 }
+
+fun formatDate(date :Date):String{
+    return SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(date)
+}
+fun formatTime(date :Date):String{
+    return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+}

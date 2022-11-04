@@ -11,32 +11,25 @@ interface ActivityRepository {
     fun getActivities(@QueryMap(encoded = true) params: Map<String, Any> = Params().toMap(), @Query("status") status:List<String> = listOf()): Call<Page<Activity>>
 
     @GET("activity/{code}")
-    fun get(@Path("code") code: String): Call<Activity>
+    fun get(@Path("code") code: String): Call<ActivityWithDetails>
 
 
     @POST("activity")
     fun create(@Body activity: ActivityPayload): Call<Activity>
 
 
-    @GET("activity/{code}/workers")
-    fun getActivityWorkers(@Path("code") code: String): Call<List<ActivityWorker>>
-
     @DELETE("activity/{code}")
     fun delete(@Path("code") code:String): Call<Void>
 
 
-    @GET("activity/{code}/paddyFields")
-    fun getActivityPaddyFields(@Path("code") code: String): Call<List<ActivityPaddyField>>
 
-    @GET("activity/{code}/resources")
-    fun getActivityResources(@Path("code") code: String): Call<List<ActivityResource>>
 
 
     @POST("activity/{code}/paddyFields")
-    fun addPaddyFieldsToActivity(@Path("code") code:String, @Body paddyFieldsCode:List<String>):Call<List<ActivityPaddyField>>
+    fun addPaddyFieldsToActivity(@Path("code") code:String, @Body paddyFieldsCode:List<String>):Call<List<ActivityPaddyFieldWithoutActivity>>
 
     @POST("activity/{code}/workers")
-    fun addWorkersToActivity(@Path("code") code:String, @Body workersCode:List<String>):Call<List<ActivityWorker>>
+    fun addWorkersToActivity(@Path("code") code:String, @Body workersCode:List<String>):Call<List<ActivityWorkerWithoutActivity>>
 
 
     @PUT("activity/{code}/undone")

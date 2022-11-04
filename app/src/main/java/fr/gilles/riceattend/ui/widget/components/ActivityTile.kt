@@ -18,16 +18,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fr.gilles.riceattend.services.entities.models.Activity
 import fr.gilles.riceattend.services.entities.models.ActivityStatus
 
 @Composable
-fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
+fun ActivityTile(onClick: () -> Unit = {}, activity: Activity, additionnalContent: @Composable () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp)
+            .padding(vertical = 5.dp)
             .clip(RoundedCornerShape(5.dp))
             .clickable { onClick() },
         elevation = 8.dp
@@ -38,7 +40,6 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
-
             when (activity.status) {
                 ActivityStatus.IN_PROGRESS -> {
                     Icon(
@@ -55,7 +56,7 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
                     Icon(Icons.Outlined.Cancel, "Cancelled", Modifier.padding(20.dp), Color.Red)
                 }
                 ActivityStatus.UNDONE -> {
-                    Icon(Icons.Default.Snooze, "Undone", Modifier.padding(20.dp), Color.Cyan)
+                    Icon(Icons.Default.Snooze, "Undone", Modifier.padding(20.dp), Color.Gray)
                 }
                 else -> {
                     Icon(Icons.Outlined.TimerOff, "Unknown", Modifier.padding(20.dp))
@@ -68,25 +69,22 @@ fun ActivityTile(onClick: () -> Unit = {}, activity: Activity) {
                     .fillMaxHeight()
                     .weight(7f)
             ) {
-                Text(activity.name, style = MaterialTheme.typography.h1)
                 Text(
-                    activity.status.label,
+                    activity.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
                     style = MaterialTheme.typography.body1,
-                    modifier = Modifier.padding(vertical = 5.dp)
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 5.dp)
                 )
                 Text(
                     text = "${formatDateToHumanReadable(activity.startDate)} - ${
                         formatDateToHumanReadable(
                             activity.endDate
                         )
-                    }", modifier = Modifier
+                    }",
+                    fontSize = 12.sp
                 )
-                Text(
-                    text = "Cree le ${formatDateToHumanReadable(activity.createdAt)}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp)
-                )
+                additionnalContent()
             }
         }
 

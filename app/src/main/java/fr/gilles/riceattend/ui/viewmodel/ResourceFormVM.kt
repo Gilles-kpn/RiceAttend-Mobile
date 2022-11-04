@@ -3,10 +3,12 @@ package fr.gilles.riceattend.ui.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.entities.models.ResourcePayload
 import fr.gilles.riceattend.services.entities.models.ResourceType
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 
+@HiltViewModel
 class ResourceFormVM {
     var loading by mutableStateOf(false)
     var name by mutableStateOf(
@@ -36,7 +38,7 @@ class ResourceFormVM {
     var type by mutableStateOf(
         TextFieldState(
             defaultValue = ResourceType.WATER,
-            validator = { it.name.isNotBlank() },
+            validator = { it.value.isNotBlank() },
             errorMessage = { "Choisissez un type valide" },
         )
     )
@@ -50,6 +52,8 @@ class ResourceFormVM {
             quantity = quantity.value.toLong()
         )
     }
+
+
 
 
 }

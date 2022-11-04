@@ -9,6 +9,8 @@ open class Resource(
     @SerializedName("name") var name: String,
 ) : Audit()
 
+
+
 data class ResourcePayload(
     @SerializedName("unitPrice") var unitPrice: Long,
     @SerializedName("quantity") var quantity: Long,
@@ -16,12 +18,19 @@ data class ResourcePayload(
     @SerializedName("name") var name: String,
 )
 
+data class ResourceDetails(
+    @SerializedName("unitPrice") var unitPrice: Long,
+    @SerializedName("quantity") var quantity: Long,
+    @SerializedName("resourceType") var resourceType: ResourceType,
+    @SerializedName("name") var name: String,
+    @SerializedName("activityResources") var activityResources: List<ActivityResourceWithoutResource>,
+) : Audit()
 
-enum class ResourceType(private val value: String) {
-    WATER("WATER"),
-    OTHER("OTHER"),
-    MATERIALS("MATERIALS"),
-    FERTILIZER("FERTILIZER")
+enum class ResourceType( val value: String,  val label: String) {
+    WATER("WATER", "Eau"),
+    OTHER("OTHER", "Autre"),
+    MATERIALS("MATERIALS", "Materiel"),
+    FERTILIZER("FERTILIZER", "Fertilisant");
 }
 
 

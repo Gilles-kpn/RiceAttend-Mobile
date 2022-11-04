@@ -1,12 +1,10 @@
 package fr.gilles.riceattend.ui.widget.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,7 +17,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 
 fun AppBar(
-    title: String = "Page",
+    title: String = "",
     leftContent: @Composable () -> Unit = {},
     rightContent: @Composable () -> Unit = {}
 ) {
@@ -27,8 +25,7 @@ fun AppBar(
         Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clip(RoundedCornerShape(5.dp))
-            .background(MaterialTheme.colors.primary),
+            .clip(RoundedCornerShape(3.dp)),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -36,9 +33,8 @@ fun AppBar(
             leftContent()
             Text(
                 text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colors.background,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 10.dp)
             )
         }

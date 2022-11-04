@@ -9,28 +9,30 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
 import kotlinx.coroutines.launch
 
-class PaddyFieldVMFactory(private val code : String ): ViewModelProvider.NewInstanceFactory()  {
-    @RequiresApi(Build.VERSION_CODES.O)
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return PaddyFieldVM(code) as T
-    }
-}
 
+
+
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class PaddyFieldVM(val code: String) : ViewModel() {
+class PaddyFieldVM @AssistedInject constructor(
+    @Assisted val code: String,
+    private val apiEndpoint: ApiEndpoint
+    ) : ViewModel() {
     var loading by mutableStateOf(false)
-    var paddyField by mutableStateOf<PaddyField?>(null)
+    var paddyField by mutableStateOf<PaddyFieldDetails?>(null)
     var plants by mutableStateOf<Page<Plant>?>(null)
     var paddyfieldFormVM by mutableStateOf(PaddyFieldFormVM())
     var updateLoading by mutableStateOf(false)
-    var paddyFieldActivities by mutableStateOf<List<ActivityPaddyField>>(listOf())
 
 
     init {
@@ -41,17 +43,16 @@ class PaddyFieldVM(val code: String) : ViewModel() {
      private fun loadPaddyField() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(code)
-                .enqueue(object : ApiCallback<PaddyField>() {
-                    override fun onSuccess(response: PaddyField) {
+            apiEndpoint.paddyFieldRepository.get(code)
+                .enqueue(object : ApiCallback<PaddyFieldDetails>() {
+                    override fun onSuccess(response: PaddyFieldDetails) {
                         paddyField = response
+                        loading = false;
                         initUpdateForm()
-                        loadPaddyFieldActivities()
                     }
 
                     override fun onError(error: ApiResponseError) {
                         loading = false
-                        Log.d("PaddyFieldViewModel", "Error: ${error.message}")
                     }
 
                 })
@@ -74,13 +75,13 @@ class PaddyFieldVM(val code: String) : ViewModel() {
     fun update(onError: (String) -> Unit) {
         updateLoading = true
         viewModelScope.launch {
-            paddyField?.let {
-                ApiEndpoint.paddyFieldRepository.update(
+            paddyField?.let { apiEndpoint.paddyFieldRepository.update(
                     it.code,
                     paddyfieldFormVM.toPaddyFieldPayload()
                 )
-                    .enqueue(object : ApiCallback<PaddyField>() {
-                        override fun onSuccess(response: PaddyField) {
+                    .enqueue(object : ApiCallback<PaddyFieldDetails>() {
+                        override fun onSuccess(response: PaddyFieldDetails) {
+                            response.activityPaddyFields = it.activityPaddyFields
                             paddyField = response
                             updateLoading = false
                             initUpdateForm()
@@ -98,7 +99,7 @@ class PaddyFieldVM(val code: String) : ViewModel() {
 
     private fun loadPlants() {
         viewModelScope.launch {
-            ApiEndpoint.resourceRepository.getPlant(
+            apiEndpoint.resourceRepository.getPlant(
                 Params(
                     pageNumber = 0,
                     pageSize = 200,
@@ -118,21 +119,21 @@ class PaddyFieldVM(val code: String) : ViewModel() {
 
     }
 
+    @AssistedFactory
+    interface Factory{
+        fun create(code: String): PaddyFieldVM
+    }
 
-    private fun loadPaddyFieldActivities(){
-        paddyField?.let {
-            viewModelScope.launch {
-                ApiEndpoint.paddyFieldRepository.getPaddyFieldActivities(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityPaddyField>>() {
-                        override fun onSuccess(response: List<ActivityPaddyField>) {
-                            paddyFieldActivities = response
-                            loading = false
-                        }
 
-                        override fun onError(error: ApiResponseError) {
-                            Log.d("PaddyFieldViewModel", "Error: ${error.message}")
-                        }
-                    })
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideFactory(
+            paddyFieldFactory: Factory,
+            code: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return paddyFieldFactory.create(code) as T
             }
         }
     }

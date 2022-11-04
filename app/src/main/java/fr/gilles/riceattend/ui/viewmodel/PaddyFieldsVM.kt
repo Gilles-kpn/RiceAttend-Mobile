@@ -8,15 +8,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.*
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
-class PaddyFieldsVM : ViewModel() {
+@HiltViewModel
+class PaddyFieldsVM @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+)  : ViewModel() {
     val searchState by mutableStateOf(TextFieldState(validator = {
         it.isNotBlank() && it.isNotEmpty()
     }, errorMessage = {
@@ -37,7 +42,7 @@ class PaddyFieldsVM : ViewModel() {
     private fun loadPaddyField() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(queryParams.toMap())
+            apiEndpoint.paddyFieldRepository.get(queryParams.toMap())
                 .enqueue(object : ApiCallback<Page<PaddyField>>() {
                     override fun onSuccess(response: Page<PaddyField>) {
                         paddyFields = response
@@ -56,7 +61,7 @@ class PaddyFieldsVM : ViewModel() {
 
     private fun loadPlants() {
         viewModelScope.launch {
-            ApiEndpoint.resourceRepository.getPlant(
+            apiEndpoint.resourceRepository.getPlant(
                 Params(
                     pageNumber = 0,
                     pageSize = 200,
@@ -78,7 +83,7 @@ class PaddyFieldsVM : ViewModel() {
     fun createPaddyField(onError: (String) -> Unit = {}, onSuccess: () -> Unit = {}) {
         paddyFieldCreationLoading = true
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.create(paddyFormViewModel.toPaddyFieldPayload())
+            apiEndpoint.paddyFieldRepository.create(paddyFormViewModel.toPaddyFieldPayload())
                 .enqueue(object : ApiCallback<PaddyField>() {
                     override fun onSuccess(response: PaddyField) {
                         paddyFieldCreationLoading = false

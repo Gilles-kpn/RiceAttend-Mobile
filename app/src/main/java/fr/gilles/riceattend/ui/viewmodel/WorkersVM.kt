@@ -1,13 +1,12 @@
 package fr.gilles.riceattend.ui.viewmodel
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -16,9 +15,12 @@ import fr.gilles.riceattend.services.entities.models.Params
 import fr.gilles.riceattend.services.entities.models.Worker
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-@RequiresApi(Build.VERSION_CODES.O)
-class WorkersVM : ViewModel() {
+@HiltViewModel
+class WorkersVM @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+)  : ViewModel() {
     var searchState by mutableStateOf(
         TextFieldState(
             defaultValue = "",
@@ -42,7 +44,7 @@ class WorkersVM : ViewModel() {
 
         viewModelScope.launch {
             Log.d("WorkersViewModel", "loadWorkers")
-            ApiEndpoint.workerRepository.get(params.toMap())
+            apiEndpoint.workerRepository.get(params.toMap())
                 .enqueue(object : ApiCallback<Page<Worker>>() {
                     override fun onSuccess(response: Page<Worker>) {
                         workers = response
@@ -60,7 +62,7 @@ class WorkersVM : ViewModel() {
     fun create(onError: (String) -> Unit = {}, onSuccess: () -> Unit = {}) {
         creationLoading = true
         viewModelScope.launch {
-            ApiEndpoint.workerRepository.create(workerFormVM.toWorkerPayload())
+            apiEndpoint.workerRepository.create(workerFormVM.toWorkerPayload())
                 .enqueue(object : ApiCallback<Worker>() {
                     override fun onSuccess(response: Worker) {
                         creationLoading = false

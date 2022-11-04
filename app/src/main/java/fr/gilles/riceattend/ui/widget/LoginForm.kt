@@ -24,8 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -34,16 +36,15 @@ import fr.gilles.riceattend.services.entities.models.LoginUser
 import fr.gilles.riceattend.services.entities.models.User
 import fr.gilles.riceattend.ui.formfields.EmailFieldState
 import fr.gilles.riceattend.ui.formfields.PasswordFieldState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @Preview
 @Composable
 @RequiresApi(Build.VERSION_CODES.O)
 fun LoginFormWidget(
-    viewModel: LoginFormViewModel = LoginFormViewModel(),
+    viewModel: LoginFormViewModel = hiltViewModel(),
     additional: @Composable () -> Unit = {},
     onError: (String) -> Unit = {},
     onSuccess: () -> Unit = {}
@@ -196,8 +197,11 @@ fun LoginFormWidget(
     }
 
 }
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class LoginFormViewModel : ViewModel() {
+class LoginFormViewModel @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+)   : ViewModel() {
     val emailState by mutableStateOf(EmailFieldState())
     val passwordState by mutableStateOf(PasswordFieldState())
     var passwordVisible by mutableStateOf(false)
@@ -208,7 +212,7 @@ class LoginFormViewModel : ViewModel() {
     fun login(onError: (String) -> Unit, onSuccess: () -> Unit) {
         viewModelScope.launch {
             loading = true
-            ApiEndpoint.authRepository.login(
+            apiEndpoint.authRepository.login(
                 LoginUser(emailState.value, passwordState.value)
             ).enqueue(object : ApiCallback<String>() {
                 override fun onSuccess(response: String) {
@@ -226,7 +230,7 @@ class LoginFormViewModel : ViewModel() {
 
     fun currentUser(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
-            ApiEndpoint.authRepository.current().enqueue(object : ApiCallback<User>() {
+            apiEndpoint.authRepository.current().enqueue(object : ApiCallback<User>() {
                 override fun onSuccess(response: User) {
                     SessionManager.session.user = response
                     SessionManager.store()

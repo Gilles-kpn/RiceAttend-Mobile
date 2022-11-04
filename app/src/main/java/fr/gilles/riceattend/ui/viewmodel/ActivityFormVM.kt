@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.entities.models.ActivityPayload
 import fr.gilles.riceattend.services.entities.models.ActivityResourcePayload
 import fr.gilles.riceattend.services.entities.models.PaddyField
@@ -18,6 +19,7 @@ import java.time.format.FormatStyle
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.O)
+@HiltViewModel
 class ActivityFormVM : ViewModel() {
     var name by mutableStateOf(TextFieldState(
         defaultValue = "",
@@ -37,6 +39,18 @@ class ActivityFormVM : ViewModel() {
             "Description requise"
         }
     ))
+
+    var type by mutableStateOf(
+        TextFieldState(
+            defaultValue = "",
+            validator = {
+                it.isNotBlank() && it.isNotEmpty()
+            },
+            errorMessage = {
+                "Le type d'activite doit etre selectionner"
+            }
+        )
+    )
 
     var startDate by mutableStateOf(TextFieldState<Instant>(
         defaultValue = Instant.now(),

@@ -135,15 +135,26 @@
         <entry key="../../../../layout/compose-model-1659373525102.xml" value="0.3146114864864865" />
         <entry key="../../../../layout/compose-model-1661639564835.xml" value="0.16596283783783783" />
         <entry key="../../../../layout/compose-model-1661643483807.xml" value="0.30658783783783783" />
+        <entry key="../../../../layout/compose-model-1663074533485.xml" value="0.1" />
+        <entry key="../../../../layout/compose-model-1663338608575.xml" value="0.3112331081081081" />
         <entry key="app/src/main/res/drawable/ic_app_background.xml" value="0.191" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.171" />
+        <entry key="app/src/main/res/drawable/ic_logo.xml" value="0.1915" />
+        <entry key="app/src/main/res/drawable/splash_image.xml" value="0.298" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
     <option name="id" value="Android" />
+  </component>
+  <component name="SuppressABINotification">
+    <option name="modulesWithSuppressedNotConfigured">
+      <set>
+        <option value="RiceAttend.app" />
+      </set>
+    </option>
   </component>
 </project>

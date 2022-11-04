@@ -1,4 +1,4 @@
-package fr.gilles.riceattend.ui.screens.main.fragments
+package fr.gilles.riceattend.ui.screens.main.lists
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -6,10 +6,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import fr.gilles.riceattend.ui.viewmodel.SettingsVM
 import fr.gilles.riceattend.ui.widget.components.AppBar
 import fr.gilles.riceattend.ui.widget.components.InputDropDownSelect
@@ -17,7 +18,7 @@ import fr.gilles.riceattend.ui.widget.components.InputDropDownSelect
 @Composable
 fun SettingsFragment(
     onMenuClick: () -> Unit = {},
-    viewModel: SettingsVM =  SettingsVM()
+    viewModel: SettingsVM =  hiltViewModel()
 ) {
     Column(modifier= Modifier
         .fillMaxSize()
@@ -31,7 +32,6 @@ fun SettingsFragment(
                     Icon(
                         Icons.Filled.ArrowBack,
                         "Back",
-                        tint = MaterialTheme.colors.background
                     )
                 }
             }

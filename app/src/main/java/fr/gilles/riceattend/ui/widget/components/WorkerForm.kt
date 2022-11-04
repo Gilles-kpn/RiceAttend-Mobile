@@ -31,7 +31,7 @@ fun WorkerForm(
             )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Outlined.Person, "Landscape")

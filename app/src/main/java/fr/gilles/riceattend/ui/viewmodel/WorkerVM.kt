@@ -9,20 +9,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.services.entities.models.ActivityWorker
-import fr.gilles.riceattend.services.entities.models.Worker
+import fr.gilles.riceattend.services.entities.models.WorkerDetails
 import kotlinx.coroutines.launch
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class WorkerVM(val code: String) : ViewModel() {
+class WorkerVM @AssistedInject constructor(
+    val code: String,
+    private val apiEndpoint: ApiEndpoint
+    ) : ViewModel() {
     var loading by mutableStateOf(false)
-    var worker by mutableStateOf<Worker?>(null)
-    var workerActivities by mutableStateOf<List<ActivityWorker>>(listOf())
+    var worker by mutableStateOf<WorkerDetails?>(null)
     var workerFormVM by mutableStateOf(WorkerFormVM())
     var updateLoading by mutableStateOf(false)
 
@@ -49,15 +55,12 @@ class WorkerVM(val code: String) : ViewModel() {
     private fun getWorker() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.workerRepository.get(code)
-                .enqueue(object : ApiCallback<Worker>() {
-                    override fun onSuccess(response: Worker) {
+            apiEndpoint.workerRepository.get(code)
+                .enqueue(object : ApiCallback<WorkerDetails>() {
+                    override fun onSuccess(response: WorkerDetails) {
                         worker = response
                         loading = false
                         initUpdateFormViewModel()
-                        loadWorkerActivities()
-                        Log.d("WorkerViewModel", "Worker: ${response}")
-
                     }
 
                     override fun onError(error: ApiResponseError) {
@@ -91,11 +94,12 @@ class WorkerVM(val code: String) : ViewModel() {
         updateLoading = true
         viewModelScope.launch {
             worker?.let {
-                ApiEndpoint.workerRepository.update(
+                apiEndpoint.workerRepository.update(
                     it.code,
                     workerFormVM.toWorkerPayload()
-                ).enqueue(object : ApiCallback<Worker>() {
-                    override fun onSuccess(response: Worker) {
+                ).enqueue(object : ApiCallback<WorkerDetails>() {
+                    override fun onSuccess(response: WorkerDetails) {
+                        response.activityWorkers = worker?.activityWorkers!!
                         worker = response
                         updateLoading = false
                         initUpdateFormViewModel()
@@ -110,24 +114,22 @@ class WorkerVM(val code: String) : ViewModel() {
         }
     }
 
-    private fun loadWorkerActivities() {
-        worker?.let {
-            loading = true
-            viewModelScope.launch {
-                ApiEndpoint.workerRepository.getWorkerActivities(it.code)
-                    .enqueue(object : ApiCallback<List<ActivityWorker>>() {
-                        override fun onSuccess(response: List<ActivityWorker>) {
-                            workerActivities = response
-                            loading = false
-                            Log.d("WorkerViewModel", "Activities: ${response}")
-                        }
 
-                        override fun onError(error: ApiResponseError) {
-                            loading = false
-                            Log.d("WorkerViewModel", error.message)
-                        }
+    @AssistedFactory
+    interface Factory{
+        fun create(code: String): PaddyFieldVM
+    }
 
-                    })
+
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideFactory(
+            workerViewModel: Factory,
+            code: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return workerViewModel.create(code) as T
             }
         }
     }

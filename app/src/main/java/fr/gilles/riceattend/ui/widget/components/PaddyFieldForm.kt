@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import fr.gilles.riceattend.services.entities.models.Page
 import fr.gilles.riceattend.services.entities.models.Plant
@@ -58,9 +59,7 @@ fun PaddyFieldForm(
                             painter = rememberAsyncImagePainter(plant.image),
                             contentDescription = "Profile picture",
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(50.dp, 50.dp)
-                                .clip(CircleShape)
+                            modifier = Modifier.size(50.dp, 50.dp).clip(CircleShape)
                         )
                         Column(modifier = Modifier.padding(start = 10.dp)) {
                             Text(
@@ -69,10 +68,7 @@ fun PaddyFieldForm(
                             )
                             Text(
                                 text = plant.shape,
-                                style = MaterialTheme.typography.body1
-                            )
-                            Text(
-                                text = plant.color,
+                                fontSize= 13.sp,
                                 style = MaterialTheme.typography.body1
                             )
                         }
@@ -97,27 +93,22 @@ fun PaddyFieldForm(
             text = "Surface de la rizière",
             style = MaterialTheme.typography.body1
         )
-        Row(Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(1.5f)) {
-                InputNumberWidget(
-                    state = paddyFormViewModel.surface_value,
-                    title = "Surface"
+        InputNumberWidget(
+            state = paddyFormViewModel.surface_value,
+            title = "Surface"
+        )
+
+        InputDropDownSelect(state = paddyFormViewModel.surface_unit,
+            list = listOf("m²", "ha"),
+            title = "Unité de mesure",
+            template = {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.body1,
+                    modifier = Modifier.padding(vertical = 10.dp)
                 )
             }
-            Box(modifier = Modifier.weight(1f)) {
-                InputDropDownSelect(state = paddyFormViewModel.surface_unit,
-                    list = listOf("m²", "ha"),
-                    title = "Unité de mesure",
-                    template = {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.body1,
-                            modifier = Modifier.padding(vertical = 10.dp)
-                        )
-                    }
-                )
-            }
-        }
+        )
         Button(
             enabled = !isLoading && (
                     paddyFormViewModel.name.isValid() &&

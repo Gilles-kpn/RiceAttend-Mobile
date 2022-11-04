@@ -8,29 +8,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
 import fr.gilles.riceattend.services.entities.models.Activity
 import fr.gilles.riceattend.services.entities.models.ActivityParam
 import fr.gilles.riceattend.services.entities.models.Page
-import fr.gilles.riceattend.ui.formfields.TextFieldState
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class ActivitiesVM : ViewModel() {
+class ActivitiesVM @Inject constructor(
+    private val apiEndpoint: ApiEndpoint
+) : ViewModel() {
     var activities by mutableStateOf<List<Activity>>(listOf())
     var hasMore by mutableStateOf(false)
     var loading by mutableStateOf(false)
     var loadingMore by mutableStateOf(false)
     val params by mutableStateOf(ActivityParam())
-    val searchState by mutableStateOf(
-        TextFieldState(
-            validator = { it.isNotBlank() && it.isNotEmpty() },
-            errorMessage = { "Valeur a rechercher requis" },
-            defaultValue = ""
-        )
-    )
+
 
     init {
         loadActivities()
@@ -42,9 +40,17 @@ class ActivitiesVM : ViewModel() {
         load { loading = false }
     }
 
+     fun refresh(){
+        params.pageNumber = 0
+        loading = true
+        activities = listOf()
+        load { loading = false }
+    }
+
+
 
     private fun load(onFinish: () -> Unit = {})  =  viewModelScope.launch {
-        ApiEndpoint.activityRepository.getActivities(params.toMap(), params.status)
+        apiEndpoint.activityRepository.getActivities(params.toMap(), params.status)
             .enqueue(object : ApiCallback<Page<Activity>>() {
                 override fun onSuccess(response: Page<Activity>) {
                     hasMore = !response.last!!

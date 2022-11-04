@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
@@ -38,7 +42,6 @@ fun AddPaddyFieldModalBottomSheet(
                             item {
                                 Text(
                                     text = "Choisissez les rizieres a ajouter",
-                                    style = MaterialTheme.typography.h1,
                                     modifier = Modifier.padding(10.dp)
                                 )
                             }
@@ -93,18 +96,17 @@ fun AddPaddyFieldModalBottomSheet(
                 }
             }
         },
-        sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-    ) {
-
-    }
+    ) {}
 
 }
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class AddPaddyFieldViewModel(
-    val alreadyExists: List<ActivityPaddyField>,
-    val onAddPaddyFields: (List<ActivityPaddyField>) -> Unit = {},
-    val activityCode:String
+class AddPaddyFieldViewModel @AssistedInject constructor(
+    @Assisted val alreadyExists: List<ActivityPaddyFieldWithoutActivity>,
+    @Assisted val onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit = {},
+    @Assisted val activityCode:String,
+    private val apiEndpoint: ApiEndpoint
 ) : ViewModel() {
     var loading by mutableStateOf(false)
     var params by mutableStateOf(Params())
@@ -121,7 +123,7 @@ class AddPaddyFieldViewModel(
     private fun loadPaddyFields() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.paddyFieldRepository.get(params.toMap())
+            apiEndpoint.paddyFieldRepository.get(params.toMap())
                 .enqueue(object : ApiCallback<Page<PaddyField>>() {
                     override fun onSuccess(response: Page<PaddyField>) {
                         if(paddyFields == null) paddyFields = response
@@ -144,11 +146,11 @@ class AddPaddyFieldViewModel(
     fun add(){
         inAdded = true
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.addPaddyFieldsToActivity(
+            apiEndpoint.activityRepository.addPaddyFieldsToActivity(
                 activityCode,
                 toBeAdded.map { it.code }
-            ).enqueue(object: ApiCallback<List<ActivityPaddyField>>(){
-                override fun onSuccess(response: List<ActivityPaddyField>) {
+            ).enqueue(object: ApiCallback<List<ActivityPaddyFieldWithoutActivity>>(){
+                override fun onSuccess(response: List<ActivityPaddyFieldWithoutActivity>) {
                     onAddPaddyFields(response)
                     inAdded = false
                 }
@@ -158,6 +160,26 @@ class AddPaddyFieldViewModel(
                 }
 
             })
+        }
+    }
+
+    @AssistedFactory
+    interface Factory{
+        fun create(code: String,  alreadyExists: List<ActivityPaddyFieldWithoutActivity>, onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit ): AddPaddyFieldViewModel
+    }
+
+
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideFactory(
+            addPaddyFieldVM: Factory,
+            code: String,
+            alreadyExists: List<ActivityPaddyFieldWithoutActivity>, onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return addPaddyFieldVM.create(code,alreadyExists, onAddPaddyFields) as T
+            }
         }
     }
 
@@ -172,7 +194,7 @@ class AddPaddyFieldViewModel(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddWorkersModalBottomSheet(
-    viewModel: AddWorkersViewModel ,
+    viewModel: AddWorkersViewModel  ,
     modalBottomSheetState: ModalBottomSheetState
 ) {
     ModalBottomSheetLayout(
@@ -185,8 +207,7 @@ fun AddWorkersModalBottomSheet(
                         LazyColumn(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 10.dp)) {
                             item {
                                 Text(
-                                    text = "Choisissez les rizieres a ajouter",
-                                    style = MaterialTheme.typography.h1,
+                                    text = "Choisissez les ouvriers a ajouter",
                                     modifier = Modifier.padding(10.dp)
                                 )
                             }
@@ -241,18 +262,19 @@ fun AddWorkersModalBottomSheet(
                 }
             }
         },
-        sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
     ) {
 
     }
 
 }
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class AddWorkersViewModel(
-    val alreadyExists: List<ActivityWorker>,
-    val onAddWorkersToActivity: (List<ActivityWorker>) -> Unit = {},
-    val activityCode:String
+class AddWorkersViewModel @AssistedInject constructor(
+    @Assisted val alreadyExists: List<ActivityWorkerWithoutActivity>,
+    @Assisted val onAddWorkersToActivity: (List<ActivityWorkerWithoutActivity>) -> Unit = {},
+    @Assisted val activityCode:String,
+    private val  apiEndpoint: ApiEndpoint
 ) : ViewModel() {
     var loading by mutableStateOf(false)
     var params by mutableStateOf(Params())
@@ -269,7 +291,7 @@ class AddWorkersViewModel(
     private fun loadWorkers() {
         loading = true
         viewModelScope.launch {
-            ApiEndpoint.workerRepository.get(params.toMap())
+            apiEndpoint.workerRepository.get(params.toMap())
                 .enqueue(object : ApiCallback<Page<Worker>>() {
                     override fun onSuccess(response: Page<Worker>) {
                         if(workers == null) workers = response
@@ -292,11 +314,11 @@ class AddWorkersViewModel(
     fun add(){
         inAdded = true
         viewModelScope.launch {
-            ApiEndpoint.activityRepository.addWorkersToActivity(
+            apiEndpoint.activityRepository.addWorkersToActivity(
                 activityCode,
                 toBeAdded.map { it.code }
-            ).enqueue(object: ApiCallback<List<ActivityWorker>>(){
-                override fun onSuccess(response: List<ActivityWorker>) {
+            ).enqueue(object: ApiCallback<List<ActivityWorkerWithoutActivity>>(){
+                override fun onSuccess(response: List<ActivityWorkerWithoutActivity>) {
                     onAddWorkersToActivity(response)
                     inAdded = false
                 }
@@ -309,5 +331,28 @@ class AddWorkersViewModel(
         }
     }
 
+
+    @AssistedFactory
+    interface Factory{
+        fun create(activityCode: String,
+                   alreadyExists: List<ActivityWorkerWithoutActivity>,
+                   onAddPaddyFields: (List<ActivityWorkerWithoutActivity>) -> Unit): AddWorkersViewModel
+    }
+
+
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideFactory(
+            addWorkerVM: Factory,
+            alreadyExists: List<ActivityWorkerWithoutActivity>,
+            onAddWorker: (List<ActivityWorkerWithoutActivity>) -> Unit,
+            code: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return addWorkerVM.create(code, alreadyExists,onAddWorker) as T
+            }
+        }
+    }
 
 }

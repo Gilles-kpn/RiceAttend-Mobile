@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "fr.gilles.riceattend"
         minSdk 21
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -31,6 +31,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+        freeCompilerArgs += '-Xjvm-default=enable'
     }
     buildFeatures {
         compose true
@@ -54,6 +55,8 @@ dependencies {
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$compose_version"
     implementation "androidx.activity:activity-compose:$compose_version"
+    implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0'
+    implementation "androidx.hilt:hilt-navigation-compose:1.0.0"
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
@@ -83,7 +86,22 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences:1.0.0"
 
     //chart
-    implementation('io.github.bytebeats:compose-charts:0.1.2')
+    implementation("com.himanshoe:charty:1.0.0")
+
+
+
+    //hilt
+    implementation 'com.google.dagger:hilt-android:2.44'
+    annotationProcessor 'com.google.dagger:hilt-compiler:2.44'
+    implementation "com.google.dagger:hilt-android:2.44"
+    implementation "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
+
+
+
+
+    //
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.21.1-beta"
+    implementation "com.google.accompanist:accompanist-swiperefresh:0.21.1-beta"
 
 }
 
