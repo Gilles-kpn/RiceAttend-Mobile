@@ -36,8 +36,7 @@ fun OpenDialog(
             content = {
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp)),
+                        .fillMaxWidth().clip(RoundedCornerShape(10.dp)),
                 ) {
                     Column(
                         modifier = Modifier.padding(10.dp)

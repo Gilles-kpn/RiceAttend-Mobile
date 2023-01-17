@@ -18,18 +18,19 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import dagger.hilt.android.EntryPointAccessors
 import fr.gilles.riceattend.app.MainActivity
-import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.services.entities.models.ActivityPaddyFieldWithoutActivity
-import fr.gilles.riceattend.services.entities.models.ActivityWorkerWithoutActivity
+import fr.gilles.riceattend.models.ActivityPaddyFieldWithoutActivity
+import fr.gilles.riceattend.models.ActivityWorkerWithoutActivity
+import fr.gilles.riceattend.services.storage.RepositoryType
+import fr.gilles.riceattend.services.storage.SessionManager
 import fr.gilles.riceattend.ui.screens.auth.LoginScreen
 import fr.gilles.riceattend.ui.screens.auth.RegisterScreen
-import fr.gilles.riceattend.ui.screens.main.MainScreen
-import fr.gilles.riceattend.ui.screens.main.details.ActivityPage
-import fr.gilles.riceattend.ui.screens.main.details.PaddyFieldPage
-import fr.gilles.riceattend.ui.screens.main.details.WorkerPage
-import fr.gilles.riceattend.ui.screens.main.lists.*
+import fr.gilles.riceattend.ui.screens.pages.MainScreen
+import fr.gilles.riceattend.ui.screens.pages.OnBoardingScreen
+import fr.gilles.riceattend.ui.screens.pages.details.*
+import fr.gilles.riceattend.ui.screens.pages.lists.*
 import fr.gilles.riceattend.ui.viewmodel.ActivityVM
 import fr.gilles.riceattend.ui.viewmodel.PaddyFieldVM
+import fr.gilles.riceattend.ui.viewmodel.RessourceVM
 import fr.gilles.riceattend.ui.viewmodel.WorkerVM
 import fr.gilles.riceattend.ui.widget.components.AddPaddyFieldViewModel
 import fr.gilles.riceattend.ui.widget.components.AddWorkersViewModel
@@ -52,7 +53,10 @@ sealed class Route(
     object PaddyFieldRoute : Route(path = "paddyfield/{code}")
     object ActivitiesRoute : Route(path = "activities")
     object ActivityRoute : Route(path = "activity/{code}")
+    object ResourceRoute: Route(path = "ressource/{code}")
+    object OnBoardingRoute: Route(path = "onboarding")
     object ActivityCreationRoute : Route(path = "activity/create")
+    object AccountRoute: Route(path = "account")
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -65,16 +69,20 @@ fun NavigationContent(
     val scaffoldState: ScaffoldState = rememberScaffoldState()
     NavHost(
         navController = navHostController,
-        startDestination = if (SessionManager.session.user == null) Route.AuthRoute.path else Route.MainRoute.path
+        startDestination = if(SessionManager.session.user != null) Route.MainRoute.path else if(SessionManager.session.repositoryType == RepositoryType.NONE) Route.OnBoardingRoute.path else Route.AuthRoute.path
     ) {
+        composable(Route.OnBoardingRoute.path) {
+            OnBoardingScreen(nav = navHostController)
+        }
         navigation(startDestination = Route.LoginRoute.path, route = Route.AuthRoute.path) {
             composable(Route.LoginRoute.path) {
-                LoginScreen(nav = navHostController, snackbarHostState = snackbarHostState)
+                LoginScreen(nav = navHostController)
             }
             composable(Route.RegisterRoute.path) {
-                RegisterScreen(navHostController, snackbarHostState = snackbarHostState)
+                RegisterScreen(navHostController)
             }
         }
+
         navigation(startDestination = Route.DashboardRoute.path, route = Route.MainRoute.path) {
 
             composable(Route.DashboardRoute.path) {
@@ -96,7 +104,7 @@ fun NavigationContent(
                     snackbarHostState = snackbarHostState,
                     content = {
                         SettingsFragment(
-                            onMenuClick = { scope.launch { scaffoldState.drawerState.open() } }
+                            navHostController = navHostController
                         )
                     },
                     scaffoldState = scaffoldState
@@ -131,7 +139,7 @@ fun NavigationContent(
                     WorkerPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = workerViewModel(bundle["code"] as String),
+                        viewModel = workerViewModel(    bundle["code"] as String),
                     )
                 }
 
@@ -145,7 +153,6 @@ fun NavigationContent(
                     ActivityPage(
                         onMenuClick = { scope.launch { navHostController.popBackStack() } },
                         navHostController = navHostController,
-                        snackbarHostState = snackbarHostState,
                         viewModel = activityViewModel(bundle["code"] as String),
                     )
                 }
@@ -158,7 +165,22 @@ fun NavigationContent(
                     PaddyFieldPage(
                         navHostController = navHostController,
                         snackbarHostState = snackbarHostState,
-                        viewModel = paddyFieldViewModel(code = bundle["code"] as String)
+                        viewModel = paddyFieldViewModel(code = bundle["code"] as String),
+                    )
+
+                }
+
+            }
+
+            composable(
+                Route.ResourceRoute.path,
+                arguments = listOf(navArgument("code") { type = NavType.StringType })
+            ) {
+                it.arguments?.let { bundle ->
+                    ResourcePage(
+                        navHostController = navHostController,
+                        snackbarHostState = snackbarHostState,
+                        viewModel = resourceViewModel(code = bundle["code"] as String)
                     )
 
                 }
@@ -167,7 +189,14 @@ fun NavigationContent(
 
             composable(Route.SettingRoute.path) {
                 SettingsFragment(
-                    onMenuClick = { scope.launch { scaffoldState.drawerState.open() } }
+                    navHostController = navHostController,
+                )
+            }
+            
+            composable(Route.AccountRoute.path){
+                AccountScreen(
+                    navHostController = navHostController,
+                    snackbarHostState = snackbarHostState,
                 )
             }
         }
@@ -237,6 +266,21 @@ fun addPaddyFieldViewModel(
             code,
             alreadyExists,
             onAddPaddyFields
+        )
+    )
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun resourceViewModel(
+    code: String,
+): RessourceVM {
+    val factory = EntryPointAccessors
+        .fromActivity<MainActivity.ViewModelFactoryProvider>(LocalContext.current as Activity)
+        .ressourceVMFactory()
+    return viewModel(
+        factory = RessourceVM.provideFactory(
+            code = code,
+            factory = factory
         )
     )
 }

@@ -37,36 +37,32 @@ fun <T> InputDropDownSelect(
     ) {
         Text(text = title, style = MaterialTheme.typography.body1)
         Row(
-            modifier = Modifier.padding(12.dp).fillMaxWidth().clickable { expanded.value = true  },
+            modifier = Modifier.padding(12.dp).fillMaxWidth().clickable { if(list.isNotEmpty()) expanded.value = true },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(9f)
-                    .clip(RoundedCornerShape(10.dp)))
-            { template(list[defaultSelectedIndex.value]) }
-            Box(modifier = Modifier.weight(1f)) {
-                Icon(Icons.Outlined.ArrowDropDown, "Dropdown")
-            }
+            if (list.isEmpty()) Text(text = "Aucun element a selectionner")
+            else template(list[defaultSelectedIndex.value])
+            if (expanded.value)
+                DropDownSelect(
+                    list = list,
+                    template = template,
+                    onIndexChanged = {
+                        defaultSelectedIndex.value = it
+                    },
+                    onSelected = {
+                        state.value = it
+                        state.validate()
+                        expanded.value = false
+                    },
+                    expanded = expanded.value
+                ) {
+                    expanded.value = false
+                }
+            else Icon(Icons.Outlined.ArrowDropDown, "Dropdown")
         }
     }
-    if (expanded.value)
-        DropDownSelect(
-            list = list,
-            template = template,
-            onIndexChanged = {
-                defaultSelectedIndex.value = it
-            },
-            onSelected = {
-                state.value = it
-                state.validate()
-                expanded.value = false
-            },
-            expanded = expanded.value
-        ) {
-            expanded.value = false
-        }
+
     state.error?.let {
         ErrorText(text = it)
     }
@@ -85,8 +81,11 @@ fun <T> DropDownSelect(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
-        properties = PopupProperties(focusable = true)
+        modifier = Modifier
+            .clip(RoundedCornerShape(5.dp))
+            .fillMaxWidth(0.98f)
+            .padding(12.dp),
+        properties = PopupProperties(focusable = true, clippingEnabled = true)
     ) {
         list.forEachIndexed { index, item ->
             DropdownMenuItem(

@@ -1,6 +1,8 @@
 package fr.gilles.riceattend.ui.widget.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,13 +22,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fr.gilles.riceattend.services.entities.models.Resource
-import fr.gilles.riceattend.services.entities.models.ResourceType
+import fr.gilles.riceattend.models.Resource
+import fr.gilles.riceattend.models.ResourceType
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ResourceTile(
     resource: Resource,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+    function:@Composable () -> Unit = {
+        Text(
+            "Quantité Restante: ${resource.quantity}",
+            modifier = Modifier.padding(vertical = 4.dp),
+            fontSize = 12.sp
+        )
+        Text(
+            "Prix Unitaire: ${resource.unitPrice}",
+            modifier = Modifier.padding(vertical = 3.dp),
+            fontSize = 12.sp
+        )
+    }
 ) {
     Card(
         modifier = Modifier
@@ -39,7 +55,10 @@ fun ResourceTile(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick() }
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
                 .padding(10.dp), verticalAlignment = Alignment.CenterVertically
         ) {
             when (resource.resourceType) {
@@ -63,16 +82,8 @@ fun ResourceTile(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 5.dp)
                 )
-                Text(
-                    "Quantité Restante: ${resource.quantity}",
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    fontSize = 12.sp
-                )
-                Text(
-                    "Prix Unitaire: ${resource.unitPrice}",
-                    modifier = Modifier.padding(vertical = 3.dp),
-                    fontSize = 12.sp
-                )
+                function()
+
             }
         }
     }

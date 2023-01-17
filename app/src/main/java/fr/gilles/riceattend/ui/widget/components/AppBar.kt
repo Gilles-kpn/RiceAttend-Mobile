@@ -34,7 +34,7 @@ fun AppBar(
             Text(
                 text = title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 10.dp)
             )
         }

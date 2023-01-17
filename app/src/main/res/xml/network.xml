@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">http://app-d36484a3-7079-4e0d-b061-98226694a0ad.cleverapps.io</domain>
+    </domain-config>
+</network-security-config>

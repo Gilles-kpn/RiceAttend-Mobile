@@ -5,26 +5,30 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.models.WorkerDetails
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.services.entities.models.WorkerDetails
+import fr.gilles.riceattend.services.storage.SessionManager
+import fr.gilles.riceattend.utils.Dialog
+import fr.gilles.riceattend.utils.DialogService
 import kotlinx.coroutines.launch
 
-@HiltViewModel
+
 @RequiresApi(Build.VERSION_CODES.O)
 class WorkerVM @AssistedInject constructor(
-    val code: String,
+    @Assisted val code: String,
     private val apiEndpoint: ApiEndpoint
     ) : ViewModel() {
     var loading by mutableStateOf(false)
@@ -90,7 +94,7 @@ class WorkerVM @AssistedInject constructor(
         }
     }
 
-    fun updateWorker(onError: (String) -> Unit) {
+    fun updateWorker(onFinish: () -> Unit = {}) {
         updateLoading = true
         viewModelScope.launch {
             worker?.let {
@@ -102,12 +106,27 @@ class WorkerVM @AssistedInject constructor(
                         response.activityWorkers = worker?.activityWorkers!!
                         worker = response
                         updateLoading = false
+                        DialogService.show(
+                            Dialog(
+                                title = "Ouvrier mis à jour",
+                                message = "Les informations de l'ouvrier ont été mises à jour avec succès",
+                                displayDismissButton = false
+                            )
+                        )
+                        onFinish()
                         initUpdateFormViewModel()
                     }
 
                     override fun onError(error: ApiResponseError) {
                         updateLoading = false
-                        Log.d("WorkerViewModel", error.message)
+                        DialogService.show(
+                            Dialog(
+                                title = "Erreur",
+                                message = "Une erreur est survenue lors de la mise à jour de l'ouvrier",
+                                displayDismissButton = false,
+                                icon = Icons.Outlined.Error
+                            )
+                        )
                     }
                 })
             }
@@ -117,7 +136,7 @@ class WorkerVM @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory{
-        fun create(code: String): PaddyFieldVM
+        fun create(code: String): WorkerVM
     }
 
 

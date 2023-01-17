@@ -12,17 +12,14 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.models.*
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.*
 import kotlinx.coroutines.launch
 
 
 
-
-@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 class PaddyFieldVM @AssistedInject constructor(
     @Assisted val code: String,

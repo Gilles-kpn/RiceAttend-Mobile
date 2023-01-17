@@ -8,10 +8,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.models.*
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -73,7 +73,6 @@ class ActivityCreationVM @Inject constructor(
                     }
 
                     override fun onError(error: ApiResponseError) {
-                        TODO("Not yet implemented")
                     }
                 })
 

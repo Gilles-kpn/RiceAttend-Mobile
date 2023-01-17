@@ -2,7 +2,6 @@ package fr.gilles.riceattend.ui.widget.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -31,21 +30,29 @@ fun WorkerForm(
             )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Outlined.Person, "Landscape")
-            Text(title, style = MaterialTheme.typography.h6)
+            Icon(Icons.Outlined.Person, "Landscape", Modifier.padding(horizontal = 10.dp))
+            Text(title, style = MaterialTheme.typography.body1)
         }
 
-        InputWidget(
-            state = workerFormVM.firstNameState,
-            title = "Nom"
-        )
-        InputWidget(
-            state = workerFormVM.lastNameState,
-            title = "Prénom"
-        )
+        Row(Modifier.fillMaxWidth()) {
+            Box(Modifier.weight(1f)){
+                InputWidget(
+                    state = workerFormVM.firstNameState,
+                    title = "Nom"
+                )
+            }
+            Box(Modifier.weight(1f)){
+                InputWidget(
+                    state = workerFormVM.lastNameState,
+                    title = "Prénom"
+                )
+            }
+        }
         InputWidget(
             state = workerFormVM.emailState,
             title = "Email",
@@ -53,37 +60,35 @@ fun WorkerForm(
         )
         InputWidget(
             state = workerFormVM.phoneState,
-            title = "Téléphone",
+            title = "Tél",
             icon = Icons.Outlined.Phone
         )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = 2.dp,
-            shape = RoundedCornerShape(10.dp)
+
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp)
-            ) {
-                Text("Informations d'adresse", style = MaterialTheme.typography.h6)
-                InputWidget(
-                    state = workerFormVM.addressCountryState,
-                    title = "Pays",
-                    icon = Icons.Outlined.Map
-                )
-                InputWidget(
-                    state = workerFormVM.addressCityState,
-                    title = "Ville",
-                    icon = Icons.Outlined.Map
-                )
-                InputWidget(
-                    state = workerFormVM.addressStreetState,
-                    title = "Rue",
-                    icon = Icons.Outlined.Map
-                )
+            Text("Informations d'adresse", style = MaterialTheme.typography.body1)
+            Row(Modifier.fillMaxWidth()) {
+                Box(Modifier.weight(1f)){
+                    InputWidget(
+                        state = workerFormVM.addressCountryState,
+                        title = "Pays",
+                        icon = Icons.Outlined.Map
+                    )
+                }
+                Box(Modifier.weight(1f)){
+                    InputWidget(
+                        state = workerFormVM.addressCityState,
+                        title = "Ville",
+                        icon = Icons.Outlined.Map
+                    )
+                }
             }
         }
+
         InputNumberWidget(
             state = workerFormVM.hourlyPayState,
             title = "Paye horaire",

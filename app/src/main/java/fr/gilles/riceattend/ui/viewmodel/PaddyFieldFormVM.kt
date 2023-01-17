@@ -3,14 +3,11 @@ package fr.gilles.riceattend.ui.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import fr.gilles.riceattend.services.entities.models.PaddyFieldPayLoad
-import fr.gilles.riceattend.services.entities.models.Plant
-import fr.gilles.riceattend.services.entities.models.Surface
+import fr.gilles.riceattend.models.PaddyFieldPayLoad
+import fr.gilles.riceattend.models.Plant
+import fr.gilles.riceattend.models.Surface
 import fr.gilles.riceattend.ui.formfields.TextFieldState
-@HiltViewModel
-class PaddyFieldFormVM : ViewModel() {
+class PaddyFieldFormVM {
     var name by mutableStateOf(
         TextFieldState(
             validator = { it.isNotBlank() && it.isNotEmpty() },
@@ -32,7 +29,9 @@ class PaddyFieldFormVM : ViewModel() {
         description = "",
         image = "",
         color = "",
-        shape = ""
+        shape = "",
+        cultivationTime = null,
+        variety = null
     )
     )
     )

@@ -11,7 +11,6 @@ import fr.gilles.riceattend.R
 val Montserrat = FontFamily(
     Font(R.font.montserrat_regular),
     Font(R.font.montserrat_bold, FontWeight.Bold)
-
 )
 
 // Set of Material typography styles to start with
@@ -25,18 +24,19 @@ val Typography = Typography(
     body1 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp
-    )
-    /* Other default text styles to override
+        fontSize = 14.sp
+    ),
     button = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.W500,
-        fontSize = 14.sp
+        fontSize = 14.sp,
+        letterSpacing = 1.25.sp
+
     ),
     caption = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp
     )
-    */
+
 )

@@ -3,8 +3,10 @@ package fr.gilles.riceattend.ui.viewmodel
 import android.content.Intent
 import android.os.Build
 import android.provider.CalendarContract
-import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,26 +18,22 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.models.*
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.app.SessionManager
-import fr.gilles.riceattend.services.entities.models.ActivityPaddyField
-import fr.gilles.riceattend.services.entities.models.ActivityStatus
-import fr.gilles.riceattend.services.entities.models.ActivityWithDetails
+import fr.gilles.riceattend.services.storage.SessionManager
+import fr.gilles.riceattend.utils.Dialog
+import fr.gilles.riceattend.utils.DialogService
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.util.*
+import kotlin.streams.toList
 
 @RequiresApi(Build.VERSION_CODES.O)
-@HiltViewModel
 class ActivityVM @AssistedInject constructor(
     @Assisted val code: String,
     private val apiEndpoint: ApiEndpoint
-    ) : ViewModel() {
+) : ViewModel() {
     var activity by mutableStateOf<ActivityWithDetails?>(null)
     var loading by mutableStateOf(false)
 
@@ -46,7 +44,6 @@ class ActivityVM @AssistedInject constructor(
 
     private fun loadActivity() {
         loading = true
-        Log.d("Launch one time scope", "1 launch")
         viewModelScope.launch {
             apiEndpoint.activityRepository.get(code)
                 .enqueue(object : ApiCallback<ActivityWithDetails>() {
@@ -63,108 +60,149 @@ class ActivityVM @AssistedInject constructor(
     }
 
 
-    fun markAsDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
+    fun markAsDone() {
         viewModelScope.launch {
-            apiEndpoint.activityRepository.doneActivity(activity!!.code)
-                .enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful)
-                            onSuccess()
-                        else
-                            onError()
+            apiEndpoint.activityRepository.doneActivity(code)
+                .enqueue(object : ApiCallback<Unit>() {
+                    override fun onSuccess(response: Unit) {
+                        activity?.let {
+                            activity = it.copy(
+                                status = ActivityStatus.DONE,
+                                activityPaddyFields = it.activityPaddyFields.stream().map { paddy ->
+                                    paddy.copy(status = ActivityStatus.DONE)
+                                }.toList()
+                            )
+                        }
+
+                        DialogService.show(
+                            Dialog(
+                                title = "Activité terminée",
+                                message = "L'activité a éte terminée avec succes et également sur toute les rizières concernées",
+                                icon = Icons.Outlined.Check,
+                                displayDismissButton = false
+                            )
+                        )
                     }
 
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        onError()
-                    }
-                })
-        }
-    }
-
-    fun markAsUnDone(onSuccess: () -> Unit = {}, onError: () -> Unit) {
-        viewModelScope.launch {
-            apiEndpoint.activityRepository.undoneActivity(activity!!.code)
-                .enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            activity!!.status = ActivityStatus.UNDONE
-                            activity!!.activityPaddyFields.forEach {
-                                it.status = ActivityStatus.UNDONE
-                            }
-                            onSuccess()
-                        } else onError()
+                    override fun onError(error: ApiResponseError) {
+                        DialogService.show(
+                            Dialog(
+                                title = "Erreur",
+                                message = "Il est impossible de terminée cette activité, veuillez réessayer plus tard",
+                                icon = Icons.Outlined.Error,
+                                displayDismissButton = false
+                            )
+                        )
                     }
 
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        onError()
-                    }
-                })
-        }
-
-    }
-
-    fun markAsStarted(onSuccess: () -> Unit = {}, onError: () -> Unit) {
-        viewModelScope.launch {
-            apiEndpoint.activityRepository.startedActivity(activity!!.code)
-                .enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            activity!!.status = ActivityStatus.IN_PROGRESS
-                            activity!!.activityPaddyFields.forEach {
-                                it.status = ActivityStatus.IN_PROGRESS
-                            }
-                            onSuccess()
-                        } else onError()
-                    }
-
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        onError()
-                    }
                 })
         }
     }
 
 
-    fun cancelActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
+    fun markAsStarted() {
         viewModelScope.launch {
-            apiEndpoint.activityRepository.cancelActivity(activity!!.code)
-                .enqueue(object : Callback<Void> {
+            apiEndpoint.activityRepository.startedActivity(code)
+                .enqueue(object : ApiCallback<Unit>() {
+                    override fun onSuccess(response: Unit) {
+                        activity?.let {
+                            activity = it.copy(
+                                status = ActivityStatus.IN_PROGRESS,
+                                activityPaddyFields = it.activityPaddyFields.stream().map { paddy ->
+                                    paddy.copy(status = ActivityStatus.IN_PROGRESS)
+                                }.toList()
+                            )
+                        }
 
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            activity!!.status = ActivityStatus.INIT
-                            activity!!.activityPaddyFields.forEach {
-                                it.status = ActivityStatus.INIT
-                            }
-                            onSuccess()
-                        } else onError()
+                        DialogService.show(
+                            Dialog(
+                                title = "Activité débutée",
+                                message = "L'activité a éte débutée avec succes et également sur toute les rizières concernées",
+                                icon = Icons.Outlined.Check,
+                                displayDismissButton = false
+                            )
+                        )
                     }
 
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        onError()
+                    override fun onError(error: ApiResponseError) {
+                        DialogService.show(
+                            Dialog(
+                                title = "Erreur",
+                                message = "Il est impossible de debuter cette activité, veuillez réessayer plus tard",
+                                icon = Icons.Outlined.Error,
+                                displayDismissButton = false
+                            )
+                        )
                     }
+
+                })
+        }
+
+    }
+
+
+    fun cancelActivity() {
+        viewModelScope.launch {
+            apiEndpoint.activityRepository.cancelActivity(code)
+                .enqueue(object : ApiCallback<Unit>() {
+                    override fun onSuccess(response: Unit) {
+                        activity?.let {
+                            activity = it.copy(
+                                status = ActivityStatus.CANCELLED,
+                                activityPaddyFields = it.activityPaddyFields.stream().map { paddy ->
+                                    paddy.copy(status = ActivityStatus.CANCELLED)
+                                }.toList()
+                            )
+                        }
+                        DialogService.show(
+                            Dialog(
+                                title = "Activité annulée",
+                                message = "L'activité a éte annulée avec succes et également sur toute les rizières concernées",
+                                icon = Icons.Outlined.Check,
+                                displayDismissButton = false
+                            )
+                        )
+                    }
+
+                    override fun onError(error: ApiResponseError) {
+                        DialogService.show(
+                            Dialog(
+                                title = "Annulation impossible",
+                                message = "Il est impossible d'annuler cette activité, veuillez réessayer plus tard",
+                                icon = Icons.Outlined.Error,
+                                displayDismissButton = false
+                            )
+                        )
+                    }
+
                 })
         }
     }
 
-    fun deleteActivity(onSuccess: () -> Unit = {}, onError: () -> Unit) {
+    fun deleteActivity(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            apiEndpoint.activityRepository.delete(activity!!.code)
-                .enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            onSuccess()
-                        } else onError()
+            apiEndpoint.activityRepository.delete(code)
+                .enqueue(object : ApiCallback<Unit>() {
+                    override fun onSuccess(response: Unit) {
+                        onSuccess()
                     }
 
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        onError()
+                    override fun onError(error: ApiResponseError) {
+                        DialogService.show(
+                            Dialog(
+                                title = "Suppression impossible",
+                                message = "Il est impossible de supprimer cette activité, veuillez réessayer plus tard",
+                                icon = Icons.Outlined.Error,
+                                displayDismissButton = false
+                            )
+                        )
                     }
+
                 })
         }
     }
 
-    fun plainlyActivityOnAgenda(onSuccess: () -> Unit = {}, onError: () -> Unit) {
+    fun plainlyActivityOnAgenda() {
         // make a rappel for the activity on the agenda of phone
         val intent = Intent(Intent.ACTION_INSERT)
         intent.type = "vnd.android.cursor.item/event"
@@ -187,102 +225,252 @@ class ActivityVM @AssistedInject constructor(
         // launch intent to create event
         activity?.let {
             SessionManager.context.get()?.startActivity(intent).run {
-                onSuccess()
+                DialogService.show(
+                    Dialog(
+                        title = "Activité ajoutée",
+                        message = "L'activité a éte ajoutée avec succes à votre agenda",
+                        icon = Icons.Outlined.Check,
+                        displayDismissButton = false
+                    )
+                )
             }
         }
     }
 
-    fun removeActivityPaddyFieldFromActivity(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {},onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
+    fun removeActivityPaddyFieldFromActivity(paddyField: PaddyField) {
         viewModelScope.launch {
             apiEndpoint.activityRepository.deletePaddyFieldFromActivity(
-                activity!!.code,
-                activityPaddyField.code
-            ).enqueue(object : Callback<Any> {
-                override fun onResponse(call: Call<Any>, response: Response<Any>) {
-                    if (response.isSuccessful) {
-                        onSuccess()
-                    }else onError()
+                code,
+                paddyField.code
+            )
+                .enqueue(object : ApiCallback<Unit>() {
+                    override fun onSuccess(response: Unit) {
+                        activity?.let {
+                            activity = it.copy(
+                                activityPaddyFields = it.activityPaddyFields.stream()
+                                    .filter { paddy ->
+                                        paddy.paddyField.code != paddyField.code
+                                    }.toList()
+                            )
+                        }
+                        DialogService.show(
+                            Dialog(
+                                title = "Rizière supprimée",
+                                message = "La rizière a éte supprimée avec succes de l'activité",
+                                icon = Icons.Outlined.Check,
+                                displayDismissButton = false
+                            )
+                        )
+                    }
 
-                    onFinish()
+                    override fun onError(error: ApiResponseError) {
+                        DialogService.show(
+                            Dialog(
+                                title = "Suppression impossible",
+                                message = "Il est impossible de supprimer cette rizière de l'activité, veuillez réessayer",
+                                displayDismissButton = false
+                            )
+                        )
+                    }
+                })
+        }
+
+    }
+
+    fun removeWorkerFromActivity(worker: Worker) {
+        viewModelScope.launch {
+            apiEndpoint.activityRepository.deleteWorkerFromActivity(
+                code,
+                worker.code
+            ).enqueue(object : ApiCallback<Unit>() {
+                override fun onSuccess(response: Unit) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Suppression effectuée",
+                            message = "Le travailleur a été supprimé avec succes de l'activité",
+                            icon = Icons.Outlined.Check,
+                            displayDismissButton = false
+                        )
+                    )
+                    activity = activity!!.copy(
+                        activityWorkers = activity!!.activityWorkers.filter { it.worker.code != worker.code }
+                    )
                 }
 
-                override fun onFailure(call: Call<Any>, t: Throwable) {
-                    onError()
+                override fun onError(error: ApiResponseError) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Suppression impossible",
+                            message = "Il est impossible de supprimer ce ouvrier de cette activité, veuillez réessayer",
+                            displayDismissButton = false,
+                        )
+                    )
                 }
+
             })
         }
     }
 
-    fun startActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
+    fun markAsStartedOnPaddyField(paddyField: PaddyField) {
         viewModelScope.launch {
             apiEndpoint.activityRepository.startedPaddyField(
-                activity!!.code,
-                activityPaddyField.code
-            ).enqueue(object : Callback<Any> {
-                override fun onResponse(call: Call<Any>, response: Response<Any>) {
-                    if (response.isSuccessful) {
-                        onSuccess()
-                    }else onError()
-
-                    onFinish()
+                code,
+                paddyField.code
+            ).enqueue(object : ApiCallback<Unit>() {
+                override fun onSuccess(response: Unit) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Activité démarrée",
+                            message = "L'activité a été démarrée avec succes sur le champ",
+                            icon = Icons.Outlined.Check,
+                            displayDismissButton = false
+                        )
+                    )
+                    activity = activity!!.copy(
+                        activityPaddyFields = activity!!.activityPaddyFields.map {
+                            if (it.paddyField.code == paddyField.code) it.copy(
+                                status = ActivityStatus.IN_PROGRESS
+                            ) else it
+                        }
+                    )
                 }
 
-                override fun onFailure(call: Call<Any>, t: Throwable) {
-                    onError()
+                override fun onError(error: ApiResponseError) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Démarrage impossible",
+                            message = "Il est impossible de démarrer cette activité sur ce champ, veuillez réessayer",
+                            displayDismissButton = false,
+                        )
+                    )
                 }
+
             })
         }
     }
 
-    fun undoneActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
-        viewModelScope.launch {
-            apiEndpoint.activityRepository.undonePaddyField(
-                activity!!.code,
-                activityPaddyField.code
-            ).enqueue(object : Callback<Any> {
-                override fun onResponse(call: Call<Any>, response: Response<Any>) {
-                    if (response.isSuccessful) {
-                        onSuccess()
-                    }else onError()
-
-                    onFinish()
-                }
-
-                override fun onFailure(call: Call<Any>, t: Throwable) {
-                    onError()
-                }
-            })
-        }
-    }
-
-    fun doneActivityOnPaddyField(activityPaddyField: ActivityPaddyField, onFinish: () -> Unit = {}, onSuccess: () -> Unit = {}, onError: () -> Unit ={} ){
+    fun markAsDoneOnPaddyField(paddyField: PaddyField) {
         viewModelScope.launch {
             apiEndpoint.activityRepository.donePaddyField(
-                activity!!.code,
-                activityPaddyField.code
-            ).enqueue(object : Callback<Any> {
-                override fun onResponse(call: Call<Any>, response: Response<Any>) {
-                    if (response.isSuccessful) {
-                        onSuccess()
-                    }else onError()
-
-                    onFinish()
+                code,
+                paddyField.code
+            ).enqueue(object : ApiCallback<Unit>() {
+                override fun onSuccess(response: Unit) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Activité terminée",
+                            message = "L'activité a été terminée avec succes sur le champ",
+                            icon = Icons.Outlined.Check,
+                            displayDismissButton = false
+                        )
+                    )
+                    activity = activity!!.copy(
+                        activityPaddyFields = activity!!.activityPaddyFields.map {
+                            if (it.paddyField.code == paddyField.code) it.copy(
+                                status = ActivityStatus.DONE
+                            ) else it
+                        }
+                    )
                 }
 
-                override fun onFailure(call: Call<Any>, t: Throwable) {
-                   onError()
+                override fun onError(error: ApiResponseError) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Terminaison impossible",
+                            message = "Il est impossible de terminer cette activité sur ce champ, veuillez réessayer",
+                            displayDismissButton = false,
+                        )
+                    )
                 }
+
             })
         }
+
     }
 
+    fun cancelActivityOnPaddyField(paddyField: PaddyField) {
+        viewModelScope.launch {
+            apiEndpoint.activityRepository.cancelPaddyField(
+                code,
+                paddyField.code
+            ).enqueue(object : ApiCallback<Unit>() {
+                override fun onSuccess(response: Unit) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Activité annulée",
+                            message = "L'activité a été annulée avec succes sur le champ",
+                            icon = Icons.Outlined.Check,
+                            displayDismissButton = false
+                        )
+                    )
+                    activity = activity!!.copy(
+                        activityPaddyFields = activity!!.activityPaddyFields.map {
+                            if (it.paddyField.code == paddyField.code) it.copy(
+                                status = ActivityStatus.CANCELLED
+                            ) else it
+                        }
+                    )
+                }
+
+                override fun onError(error: ApiResponseError) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Annulation impossible",
+                            message = "Il est impossible d'annuler cette activité sur ce champ, veuillez réessayer",
+                            displayDismissButton = false,
+                        )
+                    )
+                }
+
+            })
+        }
+
+    }
+
+    fun removeResourceFromActivity(resource: Resource) {
+        viewModelScope.launch {
+            apiEndpoint.activityRepository.deleteResourceFromActivity(
+                code,
+                resource.code
+            ).enqueue(object : ApiCallback<Unit>() {
+                override fun onSuccess(response: Unit) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Suppression effectuée",
+                            message = "La ressource a été supprimée avec succes de l'activité",
+                            icon = Icons.Outlined.Check,
+                            displayDismissButton = false
+                        )
+                    )
+                    activity = activity!!.copy(
+                        activityResources = activity!!.activityResources.filter { it.resource.code != resource.code }
+                    )
+                }
+
+                override fun onError(error: ApiResponseError) {
+                    DialogService.show(
+                        Dialog(
+                            title = "Suppression impossible",
+                            message = "Il est impossible de supprimer cette ressource de cette activité, veuillez réessayer",
+                            displayDismissButton = false,
+                        )
+                    )
+                }
+
+            })
+        }
+
+    }
+
+    fun modifyResourceQuantityOnActivity(resource: Resource) {
+
+    }
 
 
     @AssistedFactory
-    interface Factory{
-        fun create(code: String): PaddyFieldVM
+    interface Factory {
+        fun create(code: String): ActivityVM
     }
-
 
 
     @Suppress("UNCHECKED_CAST")

@@ -8,19 +8,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fr.gilles.riceattend.services.entities.models.Worker
+import coil.compose.AsyncImage
+import fr.gilles.riceattend.models.Worker
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -28,7 +27,11 @@ fun WorkerTile(
     worker: Worker,
     withBadge: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onLongClick: () -> Unit = {},
+    additionnalContent:@Composable ()->Unit = { Text(
+        text = worker.phone,
+        fontSize = 12.sp
+    )}
 ) {
     Card(
         modifier = Modifier
@@ -44,7 +47,14 @@ fun WorkerTile(
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 .padding(start = 10.dp)
         ) {
-            Icon(Icons.Outlined.Person, "worker icon", Modifier.padding(horizontal = 10.dp))
+            AsyncImage(
+                model = userGravatar(email = worker.email),
+                contentDescription = "Profile picture",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
             Column(
                 modifier = Modifier
                     .padding(12.dp)
@@ -76,10 +86,7 @@ fun WorkerTile(
                     modifier = Modifier.padding(bottom = 5.dp),
                     fontSize = 12.sp
                 )
-                Text(
-                    text = worker.phone,
-                    fontSize = 12.sp
-                )
+               additionnalContent()
             }
         }
     }

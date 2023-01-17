@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,18 +19,19 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.gilles.riceattend.models.*
 import fr.gilles.riceattend.services.api.ApiCallback
 import fr.gilles.riceattend.services.api.ApiEndpoint
 import fr.gilles.riceattend.services.api.ApiResponseError
-import fr.gilles.riceattend.services.entities.models.*
+import fr.gilles.riceattend.utils.Dialog
+import fr.gilles.riceattend.utils.DialogService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddPaddyFieldModalBottomSheet(
-    viewModel: AddPaddyFieldViewModel ,
+    viewModel: AddPaddyFieldViewModel,
     modalBottomSheetState: ModalBottomSheetState
 ) {
     ModalBottomSheetLayout(
@@ -38,7 +41,11 @@ fun AddPaddyFieldModalBottomSheet(
                 true -> LoadingCard()
                 false -> {
                     viewModel.paddyFields?.let {
-                        LazyColumn(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 10.dp)) {
+                        LazyColumn(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                        ) {
                             item {
                                 Text(
                                     text = "Choisissez les rizieres a ajouter",
@@ -61,7 +68,7 @@ fun AddPaddyFieldModalBottomSheet(
                                         ),
                                         enabled = !alreadyExist,
                                         onCheckedChange = { checkedChange ->
-                                            if(!alreadyExist){
+                                            if (!alreadyExist) {
                                                 if (checkedChange)
                                                     viewModel.toBeAdded += it.content[itemIndex]
                                                 else
@@ -100,16 +107,15 @@ fun AddPaddyFieldModalBottomSheet(
 
 }
 
-@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 class AddPaddyFieldViewModel @AssistedInject constructor(
     @Assisted val alreadyExists: List<ActivityPaddyFieldWithoutActivity>,
     @Assisted val onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit = {},
-    @Assisted val activityCode:String,
+    @Assisted val activityCode: String,
     private val apiEndpoint: ApiEndpoint
 ) : ViewModel() {
     var loading by mutableStateOf(false)
-    var params by mutableStateOf(Params())
+    var params by mutableStateOf(Params(pageSize = Int.MAX_VALUE))
     var paddyFields by mutableStateOf<Page<PaddyField>?>(null)
     var toBeAdded by mutableStateOf<List<PaddyField>>(listOf())
     var inAdded by mutableStateOf(false)
@@ -126,7 +132,7 @@ class AddPaddyFieldViewModel @AssistedInject constructor(
             apiEndpoint.paddyFieldRepository.get(params.toMap())
                 .enqueue(object : ApiCallback<Page<PaddyField>>() {
                     override fun onSuccess(response: Page<PaddyField>) {
-                        if(paddyFields == null) paddyFields = response
+                        if (paddyFields == null) paddyFields = response
                         else {
                             val temp = paddyFields!!.content
                             paddyFields = response
@@ -143,16 +149,25 @@ class AddPaddyFieldViewModel @AssistedInject constructor(
         }
     }
 
-    fun add(){
+
+    fun add() {
         inAdded = true
         viewModelScope.launch {
             apiEndpoint.activityRepository.addPaddyFieldsToActivity(
                 activityCode,
                 toBeAdded.map { it.code }
-            ).enqueue(object: ApiCallback<List<ActivityPaddyFieldWithoutActivity>>(){
+            ).enqueue(object : ApiCallback<List<ActivityPaddyFieldWithoutActivity>>() {
                 override fun onSuccess(response: List<ActivityPaddyFieldWithoutActivity>) {
                     onAddPaddyFields(response)
                     inAdded = false
+                    DialogService.show(
+                        Dialog(
+                            title = "Ajout reussi",
+                            message = "Les rizieres ont ete ajoutees avec succes",
+                            icon = Icons.Outlined.CheckCircle,
+                            displayDismissButton = false
+                        )
+                    )
                 }
 
                 override fun onError(error: ApiResponseError) {
@@ -164,10 +179,13 @@ class AddPaddyFieldViewModel @AssistedInject constructor(
     }
 
     @AssistedFactory
-    interface Factory{
-        fun create(code: String,  alreadyExists: List<ActivityPaddyFieldWithoutActivity>, onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit ): AddPaddyFieldViewModel
+    interface Factory {
+        fun create(
+            code: String,
+            alreadyExists: List<ActivityPaddyFieldWithoutActivity>,
+            onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit
+        ): AddPaddyFieldViewModel
     }
-
 
 
     @Suppress("UNCHECKED_CAST")
@@ -175,10 +193,11 @@ class AddPaddyFieldViewModel @AssistedInject constructor(
         fun provideFactory(
             addPaddyFieldVM: Factory,
             code: String,
-            alreadyExists: List<ActivityPaddyFieldWithoutActivity>, onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit
+            alreadyExists: List<ActivityPaddyFieldWithoutActivity>,
+            onAddPaddyFields: (List<ActivityPaddyFieldWithoutActivity>) -> Unit
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return addPaddyFieldVM.create(code,alreadyExists, onAddPaddyFields) as T
+                return addPaddyFieldVM.create(code, alreadyExists, onAddPaddyFields) as T
             }
         }
     }
@@ -187,14 +206,11 @@ class AddPaddyFieldViewModel @AssistedInject constructor(
 }
 
 
-
-
-
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddWorkersModalBottomSheet(
-    viewModel: AddWorkersViewModel  ,
+    viewModel: AddWorkersViewModel,
     modalBottomSheetState: ModalBottomSheetState
 ) {
     ModalBottomSheetLayout(
@@ -204,7 +220,11 @@ fun AddWorkersModalBottomSheet(
                 true -> LoadingCard()
                 false -> {
                     viewModel.workers?.let {
-                        LazyColumn(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 10.dp)) {
+                        LazyColumn(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                        ) {
                             item {
                                 Text(
                                     text = "Choisissez les ouvriers a ajouter",
@@ -212,41 +232,42 @@ fun AddWorkersModalBottomSheet(
                                 )
                             }
                             items(it.content.size) { itemIndex ->
+                                var alreadyExist by remember { mutableStateOf(false) }
+                                alreadyExist =
+                                    viewModel.alreadyAdded.stream().anyMatch { inAlready ->
+                                        inAlready.worker.code == it.content[itemIndex].code
+                                    }
                                 Row(
-                                    Modifier.fillMaxWidth(),
+                                    Modifier.fillMaxWidth().padding(end =  20.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    var alreadyExist by remember { mutableStateOf(false) }
-                                    alreadyExist =
-                                        viewModel.alreadyExists.stream().anyMatch { inAlready ->
-                                            inAlready.worker.code == it.content[itemIndex].code
-                                        }
+                                    WorkerTile(worker = it.content[itemIndex])
                                     Checkbox(
-                                        checked = if (alreadyExist) alreadyExist else viewModel.toBeAdded.contains(
-                                            it.content[itemIndex]
+                                        checked = alreadyExist.or(
+                                            viewModel.toBeAdded.contains(
+                                                it.content[itemIndex]
+                                            )
                                         ),
                                         enabled = !alreadyExist,
                                         onCheckedChange = { checkedChange ->
-                                            if(!alreadyExist){
-                                                if (checkedChange)
-                                                    viewModel.toBeAdded += it.content[itemIndex]
-                                                else
-                                                    viewModel.toBeAdded -= it.content[itemIndex]
+                                            if (!alreadyExist) {
+                                                if (checkedChange) viewModel.toBeAdded += it.content[itemIndex]
+                                                else viewModel.toBeAdded -= it.content[itemIndex]
                                             }
                                         }
                                     )
-                                    WorkerTile(worker = it.content[itemIndex])
+
                                 }
                             }
                             item {
                                 Button(
                                     onClick = { viewModel.add() },
-                                    enabled = viewModel.toBeAdded.isNotEmpty() && !viewModel.inAdded,
+                                    enabled = viewModel.toBeAdded.isNotEmpty() && !viewModel.addedLoading,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp)
                                 ) {
-                                    if (viewModel.inAdded) CircularProgressIndicator()
+                                    if (viewModel.addedLoading) CircularProgressIndicator()
                                     else Text(
                                         "Ajouter",
                                         modifier = Modifier.padding(
@@ -268,19 +289,20 @@ fun AddWorkersModalBottomSheet(
 
 }
 
-@HiltViewModel
+
 @RequiresApi(Build.VERSION_CODES.O)
 class AddWorkersViewModel @AssistedInject constructor(
     @Assisted val alreadyExists: List<ActivityWorkerWithoutActivity>,
     @Assisted val onAddWorkersToActivity: (List<ActivityWorkerWithoutActivity>) -> Unit = {},
-    @Assisted val activityCode:String,
-    private val  apiEndpoint: ApiEndpoint
+    @Assisted val activityCode: String,
+    private val apiEndpoint: ApiEndpoint
 ) : ViewModel() {
+    val alreadyAdded by mutableStateOf(alreadyExists)
     var loading by mutableStateOf(false)
-    var params by mutableStateOf(Params())
+    var params by mutableStateOf(Params(pageSize = Int.MAX_VALUE))
     var workers by mutableStateOf<Page<Worker>?>(null)
     var toBeAdded by mutableStateOf<List<Worker>>(listOf())
-    var inAdded by mutableStateOf(false)
+    var addedLoading by mutableStateOf(false)
 
 
     init {
@@ -294,7 +316,7 @@ class AddWorkersViewModel @AssistedInject constructor(
             apiEndpoint.workerRepository.get(params.toMap())
                 .enqueue(object : ApiCallback<Page<Worker>>() {
                     override fun onSuccess(response: Page<Worker>) {
-                        if(workers == null) workers = response
+                        if (workers == null) workers = response
                         else {
                             val temp = workers!!.content
                             workers = response
@@ -311,20 +333,27 @@ class AddWorkersViewModel @AssistedInject constructor(
         }
     }
 
-    fun add(){
-        inAdded = true
+    fun add() {
+        addedLoading = true
         viewModelScope.launch {
             apiEndpoint.activityRepository.addWorkersToActivity(
                 activityCode,
                 toBeAdded.map { it.code }
-            ).enqueue(object: ApiCallback<List<ActivityWorkerWithoutActivity>>(){
+            ).enqueue(object : ApiCallback<List<ActivityWorkerWithoutActivity>>() {
                 override fun onSuccess(response: List<ActivityWorkerWithoutActivity>) {
                     onAddWorkersToActivity(response)
-                    inAdded = false
+                    addedLoading = false
+                    DialogService.show(
+                        Dialog(
+                            title = "Succès",
+                            message = "Les ouvriers ont été ajoutés avec succès",
+                            displayDismissButton = false
+                        )
+                    )
                 }
 
                 override fun onError(error: ApiResponseError) {
-                    inAdded = false
+                    addedLoading = false
                 }
 
             })
@@ -333,12 +362,13 @@ class AddWorkersViewModel @AssistedInject constructor(
 
 
     @AssistedFactory
-    interface Factory{
-        fun create(activityCode: String,
-                   alreadyExists: List<ActivityWorkerWithoutActivity>,
-                   onAddPaddyFields: (List<ActivityWorkerWithoutActivity>) -> Unit): AddWorkersViewModel
+    interface Factory {
+        fun create(
+            activityCode: String,
+            alreadyExists: List<ActivityWorkerWithoutActivity>,
+            onAddPaddyFields: (List<ActivityWorkerWithoutActivity>) -> Unit
+        ): AddWorkersViewModel
     }
-
 
 
     @Suppress("UNCHECKED_CAST")
@@ -350,7 +380,7 @@ class AddWorkersViewModel @AssistedInject constructor(
             code: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return addWorkerVM.create(code, alreadyExists,onAddWorker) as T
+                return addWorkerVM.create(code, alreadyExists, onAddWorker) as T
             }
         }
     }

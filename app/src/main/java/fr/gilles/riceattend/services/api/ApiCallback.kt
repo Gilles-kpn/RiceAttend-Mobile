@@ -1,8 +1,11 @@
 package fr.gilles.riceattend.services.api
 
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import fr.gilles.riceattend.services.storage.RepositoryType
+import fr.gilles.riceattend.services.storage.SessionManager
+import fr.gilles.riceattend.utils.Dialog
+import fr.gilles.riceattend.utils.DialogService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -38,8 +41,14 @@ abstract class ApiCallback<T> : Callback<T> {
 
 
     override fun onFailure(call: Call<T>, t: Throwable) {
-        t.printStackTrace()
-        Log.e("ApiCallback Error", t.message.toString())
+        if(SessionManager.session.repositoryType == RepositoryType.REMOTE)
+            DialogService.show(
+                Dialog(
+                    title = "Erreur",
+                    message = "Une erreur est survenue. Veuillez verifier que vous disposez d'une connexion internet et reessayer. Si le probleme persiste, contactez nous.",
+                    displayDismissButton = false
+                )
+            )
     }
 }
 

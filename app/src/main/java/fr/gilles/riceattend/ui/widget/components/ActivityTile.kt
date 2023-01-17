@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fr.gilles.riceattend.services.entities.models.Activity
-import fr.gilles.riceattend.services.entities.models.ActivityStatus
+import fr.gilles.riceattend.models.Activity
+import fr.gilles.riceattend.models.ActivityStatus
 
 @Composable
 fun ActivityTile(onClick: () -> Unit = {}, activity: Activity, additionnalContent: @Composable () -> Unit = {}) {

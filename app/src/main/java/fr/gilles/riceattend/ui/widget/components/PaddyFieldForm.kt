@@ -17,8 +17,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import fr.gilles.riceattend.services.entities.models.Page
-import fr.gilles.riceattend.services.entities.models.Plant
+import fr.gilles.riceattend.models.Page
+import fr.gilles.riceattend.models.Plant
 import fr.gilles.riceattend.ui.viewmodel.PaddyFieldFormVM
 
 @Composable
@@ -40,8 +40,8 @@ fun PaddyFieldForm(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Outlined.Landscape, "Landscape")
-            Text(title, style = MaterialTheme.typography.h6)
+            Icon(Icons.Outlined.Landscape, "Landscape", Modifier.padding(horizontal = 10.dp))
+            Text(title, style = MaterialTheme.typography.body1)
         }
         plants?.let {
             InputDropDownSelect(
@@ -89,13 +89,9 @@ fun PaddyFieldForm(
             title = "Description",
             singleLine = false
         )
-        Text(
-            text = "Surface de la rizière",
-            style = MaterialTheme.typography.body1
-        )
         InputNumberWidget(
             state = paddyFormViewModel.surface_value,
-            title = "Surface"
+            title = "Surface de la rizière",
         )
 
         InputDropDownSelect(state = paddyFormViewModel.surface_unit,

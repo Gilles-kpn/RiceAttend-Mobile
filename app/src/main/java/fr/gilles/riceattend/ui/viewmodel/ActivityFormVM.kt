@@ -5,12 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import fr.gilles.riceattend.services.entities.models.ActivityPayload
-import fr.gilles.riceattend.services.entities.models.ActivityResourcePayload
-import fr.gilles.riceattend.services.entities.models.PaddyField
-import fr.gilles.riceattend.services.entities.models.Worker
+import fr.gilles.riceattend.models.*
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 import java.time.Instant
 import java.time.ZoneId
@@ -19,8 +14,7 @@ import java.time.format.FormatStyle
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.O)
-@HiltViewModel
-class ActivityFormVM : ViewModel() {
+class ActivityFormVM {
     var name by mutableStateOf(TextFieldState(
         defaultValue = "",
         validator = {
@@ -42,9 +36,9 @@ class ActivityFormVM : ViewModel() {
 
     var type by mutableStateOf(
         TextFieldState(
-            defaultValue = "",
+            defaultValue = ActivityType.OTHER,
             validator = {
-                it.isNotBlank() && it.isNotEmpty()
+                it.value.isNotBlank() && it.value.isNotEmpty()
             },
             errorMessage = {
                 "Le type d'activite doit etre selectionner"
@@ -137,6 +131,7 @@ class ActivityFormVM : ViewModel() {
             description = description.value,
             startDate = startDate.value.toString(),
             endDate = endDate.value.toString(),
+            type = type.value,
             paddyFields = paddyFields.value.map { it.code },
             workers = workers.value.map { it.code },
             resources = activityResources.value.map {

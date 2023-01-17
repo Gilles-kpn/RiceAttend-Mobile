@@ -3,13 +3,12 @@ package fr.gilles.riceattend.ui.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dagger.hilt.android.lifecycle.HiltViewModel
-import fr.gilles.riceattend.services.entities.models.Address
-import fr.gilles.riceattend.services.entities.models.WorkerPayload
+import fr.gilles.riceattend.models.Address
+import fr.gilles.riceattend.models.WorkerPayload
 import fr.gilles.riceattend.ui.formfields.EmailFieldState
 import fr.gilles.riceattend.ui.formfields.TextFieldState
 
-@HiltViewModel
+
 class WorkerFormVM {
 
     var firstNameState by mutableStateOf(
@@ -51,7 +50,7 @@ class WorkerFormVM {
     var addressCountryState by mutableStateOf(
         TextFieldState(
             defaultValue = "",
-            validator = { it.isNotBlank() },
+            validator = {  true },
             errorMessage = { "Pays requis" },
         )
     )
@@ -59,7 +58,7 @@ class WorkerFormVM {
     var addressCityState by mutableStateOf(
         TextFieldState(
             defaultValue = "",
-            validator = { it.isNotBlank() },
+            validator = { true},
             errorMessage = { "Ville requise" },
         )
     )
@@ -67,7 +66,7 @@ class WorkerFormVM {
     var addressStreetState by mutableStateOf(
         TextFieldState(
             defaultValue = "",
-            validator = { it.isNotBlank() },
+            validator = { true },
             errorMessage = { "Rue requise" },
         )
     )
@@ -86,5 +85,9 @@ class WorkerFormVM {
                 street = addressStreetState.value
             )
         )
+    }
+
+    fun reset() {
+
     }
 }
